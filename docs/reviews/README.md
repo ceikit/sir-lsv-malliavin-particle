@@ -30,7 +30,8 @@ Review (14 November 2026):
 
 ## Prior art and novelty
 
-- `2026-11-14_bloch_nakashima_prior_art_comparison.md`: equation-level comparison with Bloch and Nakashima (2008), made by the second agent from the full paper. Conclusion: close and material prior art for the idea and for the form of the correction; no equivalent of the exact four-process system was found there. The three mathematical objections in the note (conditional covariance, log-variance matching, rate-to-drift sensitivity) were checked and are correct as stated. What the note says the paper contains was not checked: the paper is not in this repository.
+- `2026-11-14_prior_art_reading.md`: first-hand reading of Benhamou, Gruz and Rivoira (2008) and of Bloch and Nakashima (2008). Confirms the comparison below and corrects one attribution.
+- `2026-11-14_bloch_nakashima_prior_art_comparison.md`: equation-level comparison with Bloch and Nakashima (2008), made by the second agent from the full paper. Conclusion: close and material prior art for the idea and for the form of the correction; no equivalent of the exact four-process system was found there. The three mathematical objections in the note (conditional covariance, log-variance matching, rate-to-drift sensitivity) were checked and are correct as stated. Its description of the paper was later confirmed against the paper itself (see the reading note).
 - `2026-11-14_publication_novelty_and_research_assessment.md`: the second agent's assessment of novelty and of possible research directions. It predates the comparison above in part; where they differ, the comparison is the later document.
 
 ## Synthetic PDE comparison
