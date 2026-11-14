@@ -44,10 +44,62 @@ The simulation scheme of Section \ref{subsec: discretisation3F} was checked sepa
 The matrix form (\ref{eq: matrixSystem}), simulated directly, agrees with (\ref{eq: sensitivities}) path by path up to the Euler error. Scripts: \texttt{check\_sensitivities.py}, \texttt{check\_forward\_measure.py}, \texttt{check\_matrix\_form.py}.
 
 \subsection{Calibration to a market surface}\label{subsec: cme}
-The Monte Carlo evidence of Section \ref{subsec: checks} concerns the identities behind (\ref{eq: mainFormula}) for a \emph{given} smooth local volatility, and the simulation scheme. The full particle calibration has been run once, on CME EUR/USD option settlements of 12 November 2026: expiries from December 2026 to December 2027, the surface being extended beyond that at constant implied-volatility smile to five years, which is synthetic. The calibration is run under the domestic risk-neutral measure with discount weights, 200,000 particles and 100 time steps per year, and two sets of rate parameters which are illustrative and not calibrated to interest rate options. The options are then repriced with an independent simulation. Over the quoted expiries the repricing error attributable to the stochastic rates is at most 0.005 volatility points with the correction (\ref{eq: mainFormula}), against 0.19 and 0.47 for the two parameter sets with the Dupire local volatility alone. With the more volatile set, the calibrated variance reaches its floor within one standard deviation of the money from about three years, on the synthetic part of the surface, and the five-year at-the-money error is 0.54. The report and the scripts are in the repository \texttt{github.com/ceikit/sir-lsv-malliavin-particle}, file \texttt{calibration/RESULTS.md}.
+The Monte Carlo evidence of Section \ref{subsec: checks} concerns the identities behind (\ref{eq: mainFormula}) for a \emph{given} smooth local volatility, and the simulation scheme. The full particle calibration has been run once, on CME EUR/USD option settlements of 12 November 2026: expiries from December 2026 to December 2027, the surface being extended beyond that at constant implied-volatility smile to five years, which is synthetic. The calibration is run under the domestic risk-neutral measure with discount weights, 200,000 particles and 100 time steps per year, and two sets of rate parameters which are illustrative and not calibrated to interest rate options. The options are then repriced with an independent simulation. Over the quoted expiries the repricing error attributable to the stochastic rates is at most 0.005 volatility points with the correction (\ref{eq: mainFormula}), against 0.19 and 0.47 for the two parameter sets with the Dupire local volatility alone. With the more volatile set, the calibrated variance reaches its floor within one standard deviation of the money from about three years, on the synthetic part of the surface, and the five-year at-the-money error is 0.54. Tables \ref{tab: cme} and \ref{tab: cmeRates} give the figures. The report and the scripts are in the repository \texttt{github.com/ceikit/sir-lsv-malliavin-particle}, file \texttt{calibration/RESULTS.md}.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lccccc}
+\toprule
+ & det.\ rates & base & base & stress & stress \\
+ & & no corr. & corrected & no corr. & corrected \\
+\midrule
+quoted expiries, mean & 0.023 & 0.099 & 0.024 & 0.239 & 0.023 \\
+quoted expiries, max & 0.134 & 0.184 & 0.135 & 0.489 & 0.134 \\
+5 years (synthetic), max & 0.102 & 0.613 & 0.133 & 2.892 & 0.537 \\
+\bottomrule
+\end{tabular}
+\caption{CME EUR/USD, 12 November 2026. Absolute repricing error, model minus market, in volatility points, over five strikes per expiry (10- and 25-delta calls and puts, at the money). Base: $\kappa_d=\kappa_f=3\%$, $\sigma^d_r=1.0\%$, $\sigma^f_r=0.8\%$, $\rho_{Sd}=-0.30$, $\rho_{Sf}=0.12$, $\rho_{df}=0.63$. Stress: $\sigma^d_r=1.5\%$, $\sigma^f_r=1.2\%$, $\rho_{Sd}=0.30$, $\rho_{Sf}=-0.30$, $\rho_{df}=0.40$. The deterministic-rates column is the error of the pipeline itself.}\label{tab: cme}
+\end{table}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lcccc}
+\toprule
+ & quoted, mean & quoted, max & 1.5 to 3.5y, max & 5y, max \\
+\midrule
+base, with correction & 0.001 & 0.005 & 0.017 & 0.030 \\
+base, no correction & 0.098 & 0.186 & 0.504 & 0.638 \\
+stress, with correction & 0.002 & 0.005 & 0.027 & 0.435 \\
+stress, no correction & 0.233 & 0.471 & 1.842 & 2.830 \\
+\bottomrule
+\end{tabular}
+\caption{Same test: repricing error attributable to the stochastic rates, in volatility points. All repricing runs share their random numbers, and the error of the deterministic-rates run is subtracted. Maturities beyond the quoted expiries use the synthetic extension of the surface.}\label{tab: cmeRates}
+\end{table}
 
 \subsection{Synthetic comparison of three methods}\label{subsec: synthetic}
-A second test is synthetic and uses options on the spot. A non-flat local volatility, whose level and skew vary in time, generates the target Dupire variance on a two-year horizon. The volatility is then recovered from that target by three methods: a three-dimensional forward equation for the discounted density with the conventional tail integrals, the five-field system of Section \ref{subsec: momentClosure}, and the particle method with the sensitivities (\ref{eq: sensitivities}). On their finest settings the three methods recover the generating volatility with a root-mean-square error between 0.002 and 0.003 volatility points, and the calibrated models reprice options against the generating model within 0.004. With 20,000 particles the particle method has an error of 0.004 after about three seconds; the two PDE solvers take 69 and 189 seconds on their finest grids. This is one set of parameters and one implementation of each method, and at this accuracy the error of the reference target is not negligible, so the methods cannot be ranked. Details are in \texttt{benchmarks/RESULTS.md}.
+A second test is synthetic and uses options on the spot. A non-flat local volatility, whose level and skew vary in time, generates the target Dupire variance on a two-year horizon. The volatility is then recovered from that target by three methods: a three-dimensional forward equation for the discounted density with the conventional tail integrals, the five-field system of Section \ref{subsec: momentClosure}, and the particle method with the sensitivities (\ref{eq: sensitivities}). On their finest settings the three methods recover the generating volatility with a root-mean-square error between 0.002 and 0.003 volatility points, and the calibrated models reprice options against the generating model within 0.004. With 20,000 particles the particle method has an error of 0.004 after about three seconds; the two PDE solvers take 69 and 189 seconds on their finest grids. This is one set of parameters and one implementation of each method, and at this accuracy the error of the reference target is not negligible, so the methods cannot be ranked. Table \ref{tab: synthetic} and Figure \ref{fig: synthetic} give the measurements; details are in \texttt{benchmarks/RESULTS.md}.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{llrrr}
+\toprule
+Method & Grid or particles & Seconds & Local volatility RMSE & Max.\ repricing error \\
+\midrule
+Density PDE & $61\times31\times31$ & 2.9 & 0.0255 & 0.0284 \\
+Five-field PDE & $61\times31\times31$ & 6.8 & 0.0041 & 0.0064 \\
+Density PDE & $101\times51\times51$ & 12.9 & 0.0076 & 0.0081 \\
+Five-field PDE & $101\times51\times51$ & 32.6 & 0.0029 & 0.0042 \\
+Density PDE & $141\times71\times71$ & 68.8 & 0.0027 & 0.0023 \\
+Five-field PDE & $141\times71\times71$ & 189.4 & 0.0027 & 0.0039 \\
+Particle & 20,000 & 3.3 & 0.0036 & 0.0039 \\
+Particle & 80,000 & 11.4 & 0.0026 & 0.0026 \\
+Particle & 320,000 & 46.5 & 0.0023 & 0.0021 \\
+\bottomrule
+\end{tabular}
+\caption{Synthetic test: recovery of a hidden non-flat volatility on a two-year horizon. Errors in volatility points. Particle rows are averages over three seeds for the time and the RMSE, and the worst seed for the repricing error.}\label{tab: synthetic}
+\end{table}
+
+\IfFileExists{../benchmarks/results/comparison.png}{\begin{figure}[h]\centering\includegraphics[width=\textwidth]{../benchmarks/results/comparison.png}\caption{Synthetic test. Left: calibration time against the error on the recovered volatility. Right: recovered volatility at two years.}\label{fig: synthetic}\end{figure}}{}
 
 \subsection{What remains untested}
 Several things remain untested. The CME options are options on futures and were treated as options on the forward to their expiry. The bias due to the time step and to the kernel bandwidth has not been quantified systematically. No market data beyond December 2027 was used, and no comparison has been made with other particle methods such as \cite{cozma,ogetbilHientzsch}.

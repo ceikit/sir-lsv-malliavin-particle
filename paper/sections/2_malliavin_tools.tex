@@ -1,8 +1,21 @@
 \section{Malliavin calculus: the tools used}\label{sec: tools}
-Before moving to the actual computation of the Malliavin derivatives in (\ref{eq: threeFactorGeneralMalliavin}) required for an explicit formulation of the Particle Algorithm in the case of three-factor FX SIR-LV model, I attempt to give a short introduction to the tools needed to understand the following derivations.
-I need to assume familiarity with the basics of Malliavin calculus. These can be found in the first chapter of \cite{nualart} and I will refer to the Nualart's book through out the computations.
+Basic familiarity with Malliavin calculus is assumed; the reference is the first chapter of \cite{nualart}. This section lists the results which are used and where. Let $W$ be a Brownian motion on $[0,T]$, $\MD$ the Malliavin derivative, $\mathbb{D}^{1,2}$ its domain and $\delta$ its adjoint, the divergence or Skorohod integral.
 
-The results I am going to use are the \textit{commutative relation} between the Derivative and Divergence operators (Proposition 1.3.8 in \cite{nualart}) and the \textit{chain rule} for the Derivative operator (Proposition 1.2.3 in \cite{nualart}).
+\paragraph{Duality.} For $F\in\mathbb{D}^{1,2}$ and $u$ in the domain of $\delta$,
+\begin{equation}\label{eq: duality}
+\mathbb{E}\big[F\,\delta(u)\big]=\mathbb{E}\Big[\int_0^T \MD_sF\,u_s\,ds\Big],
+\end{equation}
+and for an adapted square-integrable $u$ the divergence $\delta(u)$ is the It\^o integral $\int_0^Tu_s\,dW_s$ (Section 1.3 in \cite{nualart}). This is the integration by parts which moves a stochastic integral onto the payoff.
+
+\paragraph{Chain rule.} If $\varphi$ is continuously differentiable with bounded derivative, then $\MD_s\varphi(F)=\varphi'(F)\,\MD_sF$ (Proposition 1.2.3 in \cite{nualart}). Applied formally to an indicator it gives $\MD_s\mathbb{I}_{S_t>K}=\delta_K(S_t)\,\MD_sS_t$, which is how the Dirac mass at the strike, and with it a conditional expectation given $S_t=K$, appears.
+
+\paragraph{Clark-Ocone formula.} For $F\in\mathbb{D}^{1,2}$,
+\begin{equation}\label{eq: clarkOcone}
+F=\mathbb{E}[F]+\int_0^T\mathbb{E}\big[\MD_sF\,\big|\,\mathcal{F}_s\big]\,dW_s
+\end{equation}
+(Section 1.3 in \cite{nualart}). It is used to write a short rate, centred at its forward value, as a stochastic integral under the forward measure.
+
+\paragraph{Commutation of $\MD$ and $\delta$, and the derivative of a diffusion.} The last tool is the \textit{commutative relation} between the derivative and divergence operators (Proposition 1.3.8 in \cite{nualart}). Together with the chain rule it gives the Malliavin derivative of the solution of a stochastic differential equation.
 
 \begin{prop}[Commutative Relation between $\MD$ and $\delta$]\ \\
 Provided that the condition of Proposition 1.3.8 in \cite{nualart} are satisfied, one has:
@@ -13,7 +26,7 @@ Provided that the condition of Proposition 1.3.8 in \cite{nualart} are satisfied
 for a stochastic process $u$ on $L^2([0,t] \times \Omega)$.
 \end{prop}
 
-To get familiar with such tools, I am going to solve the following easy exercise (exercise 2.2.1 in\cite{nualart} ):\\
+The following exercise (Exercise 2.2.1 in \cite{nualart}) shows how the two are combined; its result is used in Sections \ref{sec: oneRate} and \ref{subsec: malliavin3F}.\\
 
 \begin{exe}
 Let $\sigma$ and $b$ be continuously differentiable functions on $\mathbb{R}$ with bounded
@@ -48,3 +61,5 @@ which is the SDE driving a Geometric Brownian Motion with initial value equal to
 \end{sol}
 
 The exercise is the scalar case of a general fact used below: for a diffusion $X$, $\MD_sX_t=J_tJ_s^{-1}\times$(diffusion coefficient at $s$), where $J$ is the first variation (tangent) process of $X$. For a system, $J$ is matrix-valued.
+
+In Section \ref{subsec: malliavin3F} the derivative $\MD_sX_t$ is never computed for each pair $(s,t)$. What is needed is its integral in $s$ against a deterministic kernel $h$, and $\int_0^th(s)\,\MD_sX_t\,ds$ is the derivative of $X_t$ with respect to a shift of the Brownian path in the direction $\int_0^\cdot h(s)ds$. As a function of $t$ it solves a linear stochastic differential equation, which can be simulated forward together with $X$.

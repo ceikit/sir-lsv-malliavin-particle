@@ -56,7 +56,7 @@ or, equivalently, under the domestic measure only,
 \end{prop}
 
 \begin{proof}\ \\
-I follow the proof of Proposition 11.1 in \cite{guyonLabordere} and show that my result is just an easy generalisation of (\ref{eq:calibration_condition_spot}). \\
+We follow the proof of Proposition 11.1 in \cite{guyonLabordere} and show that the result is an easy generalisation of (\ref{eq:calibration_condition_spot}). \\
 Define $\mathcal{P}_t\equiv D^d_{0t}(S_t-K)^+$ to be the discounted vanilla call payoff with maturity $t$ and strike $K$ under the domestic measure. By applying Ito-Tanaka's formula on such payoff, we get:
 
 \begin{align*}
@@ -78,7 +78,7 @@ By using that $\partial_K^2C_m(t,K)= \mathbb{E}^d\big[ D^d_{0t}\delta_K(S_t) \bi
 & + \frac{1}{2}\sigma(t,K)^2K^2\partial_K^2C_m(t,K)
 \end{align*}
 
-Now I am going to rewrite the term in $r^f$ under the foreign measure. From section 2.8 in \cite{clark}, one has that the Radon–Nikodym derivative of $\mathbb{P}^f$ with respect to $\mathbb{P}^d$ is
+We now rewrite the term in $r^f$ under the foreign measure. From section 2.8 in \cite{clark}, one has that the Radon–Nikodym derivative of $\mathbb{P}^f$ with respect to $\mathbb{P}^d$ is
 $$ \frac{d\mathbb{P}^f}{d\mathbb{P}^d}=\exp\bigg( \int_0^t\sigma(s,S_s) dW^S_s - \frac{1}{2}\int_0^t\sigma(s,S_s)^2 ds\bigg)$$
 Hence:
 \begin{align*}
