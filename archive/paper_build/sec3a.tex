@@ -1,0 +1,62 @@
+\section{Three Factor IR - Long-dated FX Derivatives}\label{sec: threeFactor}
+While for short-dated options (less than 1 year), assuming constant interest rates does not lead to
+significant mispricing, for long-dated options the effect of interest rate volatility becomes increasingly
+pronounced with increasing maturity and can become as important as that of the FX spot volatility.
+
+Here we consider a three factor model in which uncertainty in the spot process is explained by a geometric Brownian motion and both the domestic and foreign interest rates follow Hull-White processes.
+To incorporate smile/skew effects in the three-factor pricing model, we introduce a Local Volatility function in the spot process.
+
+The goal of this section is to explicitly derive the Particle Algorithm of \cite{guyonLabordere} in a Three Factor Local Volatility Stochastic Interest Rate (SIR-LV) framework. We derive the calibration condition for one factor stochastic domestic and foreign rates with unspecified dynamics, and then, for Hull-White rates, a Malliavin representation of it which can be evaluated with a single system of particles.
+
+Monte Carlo calibration of local volatility in an FX setting with two stochastic rates is studied in \cite{ogetbilGanesanHientzsch} (see also \cite{ogetbilHientzsch} for the corresponding Dupire formula), and a particle method with control variates for a four-factor FX local-stochastic volatility model in \cite{cozma}; an optimal transport approach to stochastic-rates calibration is developed in \cite{josephLoeperObloj}.
+
+\subsection{The Three Factor model with Local Volatility }
+The model is fully described by the following SDEs:
+\begin{align*}
+ dS_t   = &\ (r^d_t - r^f_t)S_t dt + \sigma(t,S_t)S_tdW^S_t \\
+ dr_t^d  = &\  \mu^d_t dt + \sigma_t^d dB_t^d \numberthis \label{eq: threeFactorModel}\\
+ dr_t^f  = & \ \big(\mu^f_t - \rho_{Sf}\sigma(t,S_t)\sigma_t^f \big)dt + \sigma_t^f dB_t^f
+\end{align*}
+where $S_t$ is the spot, $r_t^d$ and $r_t^f$ the domestic and foreign interest rates respectively.\\
+The volatility of the spot FX rate is the local volatility function $\sigma(t,S_t)$.
+At this stage the dynamics for the two interest rates are left unspecified to let the framework as general as possible. The stochastic vector $(W^S_t, B_t^d, B_t^f)$ is a Brownian Motion under the domestic risk-neutral measure $\mathbb{Q}^d$ with correlation matrix
+\[R=\left( \begin{array}{ccc}
+1 & \rho_{Sd} & \rho_{Sf} \\
+\rho_{Sd} & 1 & \rho_{df} \\
+\rho_{Sf} & \rho_{df} & 1 \end{array} \right)\]
+The term $-\rho_{Sf}\sigma(t,S_t)\sigma^f_t$ in the drift of the foreign rate is the quanto adjustment: under the foreign risk-neutral measure $\mathbb{Q}^f$ the foreign rate has drift $\mu^f_t$.
+
+\paragraph{Measures.} The domestic and foreign discount factors are $ D_{0t}^i=\exp\big(-\int_0^t r_s^ids\big)$ for $i\in\{d,f\}$. The foreign risk-neutral measure is defined by (section 2.8 and p.256 in \cite{clark})
+\begin{equation}\label{eq: RNforeign}
+\left.\frac{d\mathbb{Q}^f}{d\mathbb{Q}^d}\right|_{\mathcal{F}_t}=\frac{S_tD^d_{0t}}{S_0D^f_{0t}}
+=\exp\bigg( \int_0^t\sigma(s,S_s) dW^S_s - \frac{1}{2}\int_0^t\sigma(s,S_s)^2 ds\bigg),
+\end{equation}
+so that, denoting with a tilde the Brownian motions under $\mathbb{Q}^f$,
+\begin{align*}
+dW^S_t = &\ d\widetilde{W}^{S}_t + \sigma(t,S_t)dt \\
+dB^d_t = &\ d\widetilde{B}^{d}_t + \rho_{Sd}\sigma(t,S_t)dt  \numberthis \label{measureChange: domesticToForeign}\\
+dB^f_t = &\ d\widetilde{B}^{f}_t + \rho_{Sf}\sigma(t,S_t)dt
+\end{align*}
+Note that the spot driver is shifted by the full $\sigma(t,S_t)$, and that the Girsanov kernel is a function of the state. We write $\mathbb{Q}^{d^T}$ and $\mathbb{Q}^{f^T}$ for the domestic and foreign $T$-forward measures, with numeraires $P^d_{tT}$ and (in foreign currency) $P^f_{tT}$.
+
+\subsection{The Calibration Condition}
+In the proposition below, we give a necessary and sufficient condition for a three factor SIR-LVm to be calibrated to a given market smile. $C(t,K)$ denotes the fair market value of a European call option with strike $K$ and maturity $t$.
+From \cite{deelstraRayee}, the Dupire volatility is of the form:
+\begin{equation}\label{eq: threeFactorDupireVolatility}
+\sigma_{Dup}^2(t,K) =
+\frac{  \partial_t C(t,K) + (r_d^0 - r_f^0)K\partial_K C(t,K)+ r_f^0 C(t,K)}
+{ \frac{1}{2}K^2\partial^2_K C(t,K) }
+\end{equation}
+where $r_i^0 = r_i^0(t)= \mathbb{E}^{i^t} [r^i_t] = -\partial_t\ln P^{i}_{0t}$ is the market instantaneous forward rate, $\mathbb{E}^{i^t}$ being the expectation under the $t$-forward domestic and foreign measures for $i = d, i=f$ respectively.
+
+\begin{prop}[Calibration of 3-Factor SIR-LVm to market smiles]\label{prop: calibration}\ \\
+The model (\ref{eq: threeFactorModel}) is exactly calibrated to the market smile if and only if
+\begin{align*}
+\sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 & - \frac{ \mathbb{E}^d[ D_{0t}^d(r_t^d-r^0_d)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) }\\
+ &+ S_0\frac{ \mathbb{E}^f[ D_{0t}^f(r_t^f-r^0_f)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K^2\partial^2_KC(t,K) }\numberthis \label{eq: threeFactorCalibrationCondition}
+\end{align*}
+or, equivalently, under the domestic measure only,
+\begin{equation}\label{eq: singleMeasure}
+\sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 - \frac{ \mathbb{E}^d\big[ D_{0t}^d\big(K(r_t^d-r^0_d)-S_t(r_t^f-r^0_f)\big)\mathbb{I}_{S_t>K} \big]}{ \frac{1}{2}K^2\partial^2_KC(t,K) }
+\end{equation}
+\end{prop}

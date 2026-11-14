@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+# licensed market data pulled with data/pull_eurusd_options_databento.py
+eurusd_cme_options_*.csv
+*.dbn
+*.dbn.zst

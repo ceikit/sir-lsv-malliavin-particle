@@ -1,0 +1,297 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsthm,amsfonts,amssymb}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage[left=2.2cm,right=2.2cm,top=2.2cm,bottom=2.2cm]{geometry}
+
+\theoremstyle{plain}
+\newtheorem{prop}{Proposition}
+\theoremstyle{remark}
+\newtheorem*{rem}{Remark}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\sgd}{\sigma^d_r}
+\newcommand{\sgf}{\sigma^f_r}
+\newcommand{\Ld}{L^{d}}
+\newcommand{\Lf}{L^{f}}
+
+\title{Three-factor FX SIR-LV model:\\ the Malliavin representation, repaired}
+\author{Note on Section 3 of the draft (``Three Factor IR -- Long-dated FX Derivatives'')}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent
+This note replaces the subsections \emph{Malliavin representation} and
+\emph{The case of one-factor short rate models} of the draft, for Hull--White
+domestic and foreign rates. Notation is the draft's. The formulas below were
+checked by Monte Carlo (Section~\ref{sec:checks}).
+
+\section{What went wrong, in short}
+
+\begin{enumerate}
+\item \textbf{The ``second approach'' cannot work.} It replaces
+$D^{B^{d^T}}r^f$ by the derivative of $r^f$ with respect to the \emph{foreign}
+Brownian motion. The two are related by a Girsanov shift whose kernel,
+$\rho_{Sf}\,\sigma(t,S_t)$, is random. A bump of the driving noise moves $S$,
+which moves the kernel, which moves $r^f$: that is precisely the boxed term
+$-\rho_{Sf}\,\partial_S\sigma\,\sigma^f_r\,D S_t$ in equation $(1^\circ)$ of the
+draft, and it does not disappear. The two SDEs $(1^\circ)$ and $(2^\circ)$ are
+genuinely different, and $(1^\circ)$ is the right one.
+
+\item \textbf{The ``direct approach'' was right, and no closed form is needed.}
+$(D_sS_t,\,D_sr^f_t)$ solve a coupled \emph{linear} system. In Hull--White the
+Clark--Ocone integrand is $\sigma_r e^{-\kappa (t-s)}=e^{-\kappa t}\cdot\sigma_r
+e^{\kappa s}$, so the $s$-integral can be taken \emph{inside} the linear system.
+What is left is a pair of forward SDEs per particle (Section~\ref{sec:tangent})
+--- no factorisation in $s$ and $t$, no $V,U,\Theta,\Lambda,\Xi$.
+
+\item \textbf{Prefactor of the foreign term.} In the general formula of the
+draft the foreign term carries $2S_0/K^2$. It should be $2/K$: the density of
+$S_t$ under the foreign forward measure is $K/F_{0t}$ times the domestic one,
+with $F_{0t}=S_0P^f_{0t}/P^d_{0t}$.
+
+\item \textbf{One particle system is enough.} Since
+$d\Q^{f^t}/d\Q^{d^t}=S_t/F_{0t}$ is a function of $S_t$, conditional
+expectations given $S_t=K$ are the same under both measures. Nothing has to be
+simulated under $\Q^{f^T}$.
+\end{enumerate}
+
+\section{Setting}
+
+Under the domestic risk-neutral measure $\Q^d$,
+\begin{align*}
+dS_t/S_t &= (r^d_t-r^f_t)\,dt+\sigma(t,S_t)\,dW^S_t,\\
+r^d_t &= f^d(0,t)+\tfrac{(\sgd)^2}{2\kappa_d^2}(1-e^{-\kappa_dt})^2+x^d_t,
+ & dx^d_t &= -\kappa_dx^d_t\,dt+\sgd\,dB^d_t,\\
+r^f_t &= f^f(0,t)+\tfrac{(\sgf)^2}{2\kappa_f^2}(1-e^{-\kappa_ft})^2+x^f_t,
+ & dx^f_t &= \big(-\kappa_fx^f_t-\rho_{Sf}\sgf\,\sigma(t,S_t)\big)dt+\sgf\,dB^f_t,
+\end{align*}
+with $x^d_0=x^f_0=0$ and $f^i(0,t)=-\partial_t\ln P^{i,mkt}_{0t}$. The centring
+constants are the \emph{market forward rates},
+$r^{d,0}_t=\E^{d^t}[r^d_t]=f^d(0,t)$ and $r^{f,0}_t=\E^{f^t}[r^f_t]=f^f(0,t)$, so
+\[
+r^i_t-r^{i,0}_t = x^i_t+\tfrac{(\sigma^i_r)^2}{2\kappa_i^2}(1-e^{-\kappa_it})^2,
+\qquad i\in\{d,f\},
+\]
+pathwise and under any measure. In particular no term of the form
+$\E[\sigma(s,S_s)]$ is needed (the draft centred $r^f$ at
+$\E^{d^t}[r^f_t]$, which is not $r^{f,0}_t$).
+
+The calibration condition of the draft is correct. Using
+$D^d_{0t}S_t=S_0D^f_{0t}\,\frac{d\Q^f}{d\Q^d}$ it reads, under the single
+measure $\Q^d$,
+\begin{equation}\label{eq:calib}
+\sigma(t,K)^2=\sigma_{Dup}(t,K)^2
+-\frac{\E^d\big[D^d_{0t}(r^d_t-r^{d,0}_t)\I_{S_t>K}\big]}{\tfrac12K\,\partial_K^2C(t,K)}
++\frac{\E^d\big[D^d_{0t}\,S_t\,(r^f_t-r^{f,0}_t)\I_{S_t>K}\big]}{\tfrac12K^2\,\partial_K^2C(t,K)} .
+\end{equation}
+Both expectations can be estimated with the same $\Q^{d^T}$ particles (weights
+$(P^d_{tT})^{-1}$), so the second sum in the draft's $\sigma_N$ does not need
+foreign-measure particles either.
+
+\section{Malliavin representation}\label{sec:tangent}
+
+Write $g(t,S)=S\,\partial_S\sigma(t,S)$, and
+$\gamma_i(t)=\frac{(\sigma^i_r)^2}{\kappa_i}\sinh(\kappa_it)$ for $i\in\{d,f\}$.
+Define four processes, all started at $0$, driven by the $\Q^d$-Brownian
+motion $W^S$:
+\begin{align}
+d\Ld_t &= \Ld_t\,g(t,S_t)\big(dW^S_t-\sigma(t,S_t)dt\big)
+ +\big[\gamma_d(t)-\eta^f_t+\rho_{Sd}\,\sgd e^{\kappa_dt}\sigma(t,S_t)\big]dt, \label{eq:Ld}\\
+d\eta^f_t &= \big[-\kappa_f\eta^f_t-\rho_{Sf}\,\sgf\,g(t,S_t)\,\Ld_t
+ +\rho_{df}\,\sgd\sgf e^{\kappa_dt}\big]dt, \label{eq:etaf}\\[4pt]
+d\Lf_t &= \Lf_t\,g(t,S_t)\,dW^S_t
+ +\big[\eta^d_t-\gamma_f(t)+\rho_{Sf}\,\sgf e^{\kappa_ft}\sigma(t,S_t)\big]dt, \label{eq:Lf}\\
+d\eta^d_t &= \big[-\kappa_d\eta^d_t+\rho_{Sd}\,\sgd\,g(t,S_t)\,\Lf_t
+ +\rho_{df}\,\sgd\sgf e^{\kappa_ft}\big]dt. \label{eq:etad}
+\end{align}
+Under $\Q^{d^T}$ simply substitute
+$dW^S_t=dW^{S^T}_t-\rho_{Sd}\,\sgd A^d(t,T)\,dt$.
+
+\begin{prop}
+For Hull--White domestic and foreign rates, the three-factor model is
+calibrated to the market smile if and only if
+\begin{equation}\label{eq:main}
+\boxed{\;
+\sigma(t,K)^2=\sigma_{Dup}(t,K)^2
+-2\,\E^{d^t}\!\big[\,e^{-\kappa_dt}\Ld_t-e^{-\kappa_ft}\Lf_t\;\big|\;S_t=K\big]
+\;}
+\end{equation}
+\end{prop}
+
+\begin{proof}
+\emph{Domestic term.} Under $\Q^{d^t}$,
+$r^d_t-r^{d,0}_t=e^{-\kappa_dt}\int_0^th_d(s)\,dB^{d^t}_s$ with
+$h_d(s)=\sgd e^{\kappa_ds}$ deterministic. For deterministic $h$ the Malliavin
+integration by parts is just Cameron--Martin: for smooth $\varphi$,
+\[
+\E^{d^t}\Big[\varphi(S_t)\int_0^th(s)\,dB^{d^t}_s\Big]
+=\E^{d^t}\big[\varphi'(S_t)\,\partial_\varepsilon S^\varepsilon_t\big|_{\varepsilon=0}\big],
+\]
+where $S^\varepsilon$ is the solution when $(W^S,B^d,B^f)$ are shifted by
+$\varepsilon\int_0^\cdot h\,ds$ times $(\rho_{Sd},1,\rho_{df})$. (This is
+$\int_0^th(s)D_s^{B^{d^t}}S_t\,ds$.) Since $\Q^d$, $\Q^{d^t}$ and $\Q^{d^T}$
+differ by \emph{deterministic} drifts in Hull--White, the shift can be applied
+to the $\Q^d$ dynamics of Section~2. Differentiating them in $\varepsilon$ with
+$h=h_d$ gives $\partial_\varepsilon r^d_t=\gamma_d(t)$,
+$\partial_\varepsilon r^f_t=\eta^f_t$ and, by It\^o on $\ln S$,
+$\partial_\varepsilon S_t=S_t\Ld_t$ with \eqref{eq:Ld}--\eqref{eq:etaf}. Taking
+$\varphi'\to\delta_K$ and using
+$\partial_K^2C=P^d_{0t}\,q^{d^t}(K)$, with $q^{d^t}$ the $\Q^{d^t}$-density of
+$S_t$,
+\[
+\frac{\E^d[D^d_{0t}(r^d_t-r^{d,0}_t)\I_{S_t>K}]}{\tfrac12K\partial^2_KC}
+=2e^{-\kappa_dt}\,\E^{d^t}[\Ld_t\,|\,S_t=K].
+\]
+
+\emph{Foreign term.} The numerator in \eqref{eq:calib} is
+$S_0P^f_{0t}\,\E^{f^t}[(r^f_t-r^{f,0}_t)\I_{S_t>K}]$, and under $\Q^{f^t}$ the
+foreign rate is autonomous and Gaussian:
+$r^f_t-r^{f,0}_t=e^{-\kappa_ft}\int_0^th_f(s)\,d\widetilde B^{f^t}_s$,
+$h_f(s)=\sgf e^{\kappa_fs}$. The same argument applies, but the shift now acts on
+the $\Q^f$-Brownian motions $(\widetilde W^S,\widetilde B^d,\widetilde B^f)$,
+along $(\rho_{Sf},\rho_{df},1)$, in the $\Q^f$ dynamics
+\begin{align*}
+dS_t/S_t&=(r^d_t-r^f_t+\sigma^2)\,dt+\sigma\,d\widetilde W^S_t, \\
+dx^d_t&=(-\kappa_dx^d_t+\rho_{Sd}\sgd\,\sigma)\,dt+\sgd\,d\widetilde B^d_t, \qquad
+dx^f_t=-\kappa_fx^f_t\,dt+\sgf\,d\widetilde B^f_t .
+\end{align*}
+Here it is the \emph{domestic} rate that carries the quanto drift.
+Differentiating gives $\partial_\varepsilon r^f_t=\gamma_f(t)$,
+$\partial_\varepsilon r^d_t=\eta^d_t$, $\partial_\varepsilon S_t=S_t\Lf_t$ with
+$d\Lf=\Lf g\,(d\widetilde W^S+\sigma dt)+[\ldots]dt$, which is \eqref{eq:Lf}
+after $d\widetilde W^S=dW^S-\sigma\,dt$. Hence
+$\E^{f^t}[(r^f_t-r^{f,0}_t)\I_{S_t>K}]=e^{-\kappa_ft}K\,q^{f^t}(K)\,\E^{f^t}[\Lf_t|S_t=K]$.
+Because $d\Q^{f^t}/d\Q^{d^t}|_{\mathcal F_t}=S_t/F_{0t}$,
+\[
+S_0P^f_{0t}\,q^{f^t}(K)=K\,P^d_{0t}\,q^{d^t}(K)=K\,\partial_K^2C(t,K),
+\qquad
+\E^{f^t}[\,\cdot\,|S_t=K]=\E^{d^t}[\,\cdot\,|S_t=K],
+\]
+so the foreign term of \eqref{eq:calib} equals
+$2e^{-\kappa_ft}\,\E^{d^t}[\Lf_t|S_t=K]$.
+\end{proof}
+
+\begin{rem}[Where the measure change bites]
+$\Ld$ and $\Lf$ are derivatives with respect to shifts of \emph{different}
+Brownian motions ($\Q^d$ versus $\Q^f$), and those are not interchangeable
+because $B^f=\widetilde B^f+\rho_{Sf}\int\sigma(u,S_u)du$. Compared with a
+naive copy of the domestic computation, $\Lf$ has $g\,dW^S$ instead of
+$g\,(dW^S-\sigma dt)$, and $\eta^d$ acquires the feedback
+$+\rho_{Sd}\sgd\,g\,\Lf$. Symmetrically, $\eta^f$ carries
+$-\rho_{Sf}\sgf\,g\,\Ld$: this is the coupling that blocked the closed form.
+\end{rem}
+
+\section{Particle method}
+
+A particle is $(f^i,x^{d,i},x^{f,i})$ plus the four scalars
+$(\Ld,\eta^f,\Lf,\eta^d)^i$, all simulated under $\Q^{d^T}$. With
+$\Pi^i_t=\exp\!\big(A^d(t,T)\,x^{d,i}_t\big)\propto(P^{d,i}_{tT})^{-1}$,
+\begin{equation}\label{eq:particle}
+\sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2
+-2\,\frac{\sum_{i=1}^N\Pi^i_t\big[e^{-\kappa_dt}L^{d,i}_t-e^{-\kappa_ft}L^{f,i}_t\big]\,\delta_{t,N}(S^i_t-K)}
+{\sum_{i=1}^N\Pi^i_t\,\delta_{t,N}(S^i_t-K)} .
+\end{equation}
+As in the one-factor case, $\partial_K^2C$ has dropped out and there is no
+$0/0$ in the wings.
+
+\paragraph{Euler step.} With $\Delta=t_{j+1}-t_j$,
+$\sigma_j=\sigma_N(t_j,S_{t_j})$, $g_j=S_{t_j}\partial_S\sigma_N(t_j,S_{t_j})$
+and $\Delta W_j=\Delta W^{S^T}_j-\rho_{Sd}\sgd A^d(t_j,T)\Delta$:
+\begin{align*}
+\Ld_{j+1}&=\Ld_j\big[1+g_j(\Delta W_j-\sigma_j\Delta)\big]
++\big[\gamma_d(t_j)-\eta^f_j+\rho_{Sd}\sgd e^{\kappa_dt_j}\sigma_j\big]\Delta,\\
+\eta^f_{j+1}&=\eta^f_j+\big[-\kappa_f\eta^f_j-\rho_{Sf}\sgf g_j\Ld_j+\rho_{df}\sgd\sgf e^{\kappa_dt_j}\big]\Delta,\\
+\Lf_{j+1}&=\Lf_j\big[1+g_j\Delta W_j\big]
++\big[\eta^d_j-\gamma_f(t_j)+\rho_{Sf}\sgf e^{\kappa_ft_j}\sigma_j\big]\Delta,\\
+\eta^d_{j+1}&=\eta^d_j+\big[-\kappa_d\eta^d_j+\rho_{Sd}\sgd g_j\Lf_j+\rho_{df}\sgd\sgf e^{\kappa_ft_j}\big]\Delta.
+\end{align*}
+In the algorithm of the draft, step~3 becomes ``update
+$(\Ld,\eta^f,\Lf,\eta^d)$'' and step~4 uses \eqref{eq:particle}. For large
+$\kappa T$ carry $e^{-\kappa_dt}\Ld_t$ and $e^{-\kappa_ft}\Lf_t$ instead, to
+avoid large exponentials.
+
+\section{Checks}\label{sec:checks}
+
+\paragraph{(a) No foreign rate.} If $\sgf=0$ then $\eta^f=\eta^d=\Lf\equiv0$ and
+variation of constants in \eqref{eq:Ld} gives
+$\Ld_t=\sigma_rV_t(\rho\,U_t+\Theta_t\Xi_t-\Lambda_t)$: formula \eqref{eq:main}
+is the one-factor Hull--White formula of Guyon and Henry-Labord\`ere.
+
+\paragraph{(b) Constant spot volatility.} If $\sigma(t,S)\equiv\sigma$ then
+$g=0$, everything is deterministic and
+\[
+2e^{-\kappa_dt}\Ld_t-2e^{-\kappa_ft}\Lf_t=\partial_t\!\int_0^t\!\Big[
+(\sgd A^d)^2+(\sgf A^f)^2+2\rho_{Sd}\sigma\sgd A^d-2\rho_{Sf}\sigma\sgf A^f
+-2\rho_{df}\sgd\sgf A^dA^f\Big](s,t)\,ds ,
+\]
+which is exactly $\sigma_{Dup}(t)^2-\sigma^2$ for the Gaussian three-factor
+model (time derivative of the total variance of the forward). This fixes all
+signs and the $2/K$ prefactor.
+
+\paragraph{(c) Monte Carlo, with skew.} The integrated identities behind
+\eqref{eq:main},
+\begin{align*}
+\E^d\big[D^d_{0T}(r^d_T-r^{d,0}_T)(S_T-K)^+\big]&=e^{-\kappa_dT}\,\E^d\big[D^d_{0T}\I_{S_T>K}S_T\Ld_T\big],\\
+\E^d\big[D^d_{0T}S_T(r^f_T-r^{f,0}_T)(S_T-K)^+\big]&=e^{-\kappa_fT}\,\E^d\big[D^d_{0T}\I_{S_T>K}S_T^2\Lf_T\big],
+\end{align*}
+were tested with $\sigma(S)=0.12\,(1-0.6\tanh(2\ln S))$, $S_0=1$, $T=5$,
+$\kappa_d=5\%$, $\sgd=1.2\%$, $\kappa_f=10\%$, $\sgf=1.5\%$,
+$(\rho_{Sd},\rho_{Sf},\rho_{df})=(0.35,-0.30,0.40)$, flat curves at $3\%$ and
+$1\%$, $2\cdot10^6$ antithetic paths, 200 Euler steps per year. ``Naive'' drops
+the coupling terms and uses $g(dW^S-\sigma dt)$ in $\Lf$; $z$ is the
+difference to the direct estimate in standard errors.
+
+\begin{center}
+\begin{tabular}{c|rrr|rr}
+\toprule
+\multicolumn{6}{c}{Foreign-rate term ($\times10^{-3}$)}\\
+$K$ & direct & tangent \eqref{eq:Lf}--\eqref{eq:etad} & $z$ & naive & $z$\\
+\midrule
+0.70 & $-3.096$ & $-3.093$ & $-0.2$ & $-3.179$ & $+6.9$\\
+0.85 & $-2.856$ & $-2.853$ & $-0.3$ & $-2.929$ & $+7.1$\\
+1.00 & $-2.454$ & $-2.451$ & $-0.4$ & $-2.512$ & $+6.9$\\
+1.15 & $-1.914$ & $-1.913$ & $-0.1$ & $-1.956$ & $+6.6$\\
+1.30 & $-1.324$ & $-1.324$ & $\phantom{+}0.0$ & $-1.349$ & $+5.4$\\
+1.50 & $-0.658$ & $-0.658$ & $+0.1$ & $-0.668$ & $+3.6$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The domestic-rate identity holds to within $0.9$ standard errors at
+every strike. There the coupling term is small for these parameters (about
+$0.2\%$); in a stressed run ($T=10$, rate volatilities doubled, skew $0.8$) the
+uncoupled version is off by about $1.3\%$ ($z\approx6$) while
+\eqref{eq:Ld}--\eqref{eq:etaf} stays within $0.3\%$ ($z\approx1.3$, at 50
+steps per year). Script:
+\texttt{check\_malliavin\_fx.py}.
+
+\section{Remarks}
+
+\paragraph{Beyond Hull--White.} For general one-factor Markov rates the
+statement the draft was looking for is
+$D_sX_t=Y_tY_s^{-1}a(s,X_s)$ for $X=(S,r^d,r^f)$, with $Y$ the $3\times3$
+first-variation matrix and $a$ the relevant column of the diffusion matrix.
+That \emph{is} a factorisation into a $t$-part and an $s$-part, only
+matrix-valued: because of the quanto drift $Y$ is not triangular, so there is
+no scalar $V_t$. Note also that when the bond volatility depends on the rate,
+$D^{B^t}$ and $D^{B^T}$ differ for the same reason as in Section~1, item~1.
+
+\paragraph{Other corrections to the draft.}
+(i) $\Q^d\to\Q^f$: $dW^S_t=d\widetilde W^S_t+\sigma(t,S_t)\,dt$, without
+$\rho_{Sd}$; the factor $(1-2\rho_{Sd})$ in the forward under $\Q^{f^T}$ then
+disappears.
+(ii) In the discretised forward the bracket enters with $-\tfrac12\Delta$, and
+its first rate term is $(\sgd)^2I^{2,d}_j$.
+(iii) The spot SDE of the three-factor model is missing $S_t$ in the diffusion
+term.
+(iv) One-factor section: $\Xi_t=\sigma_r(e^{2\kappa t}-1)/(2\kappa)$, and the
+exponent in $\theta(t)$ is $-2\kappa t$.
+
+\end{document}

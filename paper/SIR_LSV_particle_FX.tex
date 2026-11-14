@@ -1,0 +1,889 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\author{Filippo Perugini}
+\title{DRAFT! Exact Calibration of\\ Multi-Factor Stochastic Interest Rates \\
+Local-Stochastic Volatility  (SIR-LSV) models \\ with Particle Algorithm and extensions to Long Dated FX}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[subsection]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem*{cor}{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[subsection]
+\newtheorem{conj}{Conjecture}[subsection]
+\newtheorem{exmp}{Example}[subsection]
+
+\theoremstyle{remark}
+\newtheorem*{rem}{Remark}
+\newtheorem*{sol}{Solution}
+\newtheorem*{exe}{Exercise}
+
+\newtheorem*{note}{Note}
+
+\makeatletter
+\def\th@plain{%
+  \thm@notefont{}% same as heading font
+  \itshape % body font
+}
+\def\th@definition{%
+  \thm@notefont{}% same as heading font
+  \normalfont % body font
+}
+\makeatother
+
+\newcommand{\MD}{\text{\DH}}
+\date{Draft of 2016, revised November 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We derive the particle (McKean) calibration of local volatility models with stochastic interest rates, following Guyon and Henry-Labord\`ere, and extend it to long-dated FX with Hull-White domestic and foreign rates. The three-factor calibration condition is written under a single measure, so that one system of particles suffices. Its Malliavin representation is obtained without solving the coupled two-parameter system of Malliavin derivatives: integrating the derivatives against the Hull-White kernels yields four auxiliary processes per particle, simulated forward together with the state, and a correction to the Dupire local variance which involves neither $\partial_K^2C$ nor tail expectations. The representation reduces to the known one-factor formula, matches the Gaussian closed form, and its building blocks are verified by Monte Carlo. A full calibration to a market smile has not yet been run, and existence of the calibrated model is not addressed.
+\end{abstract}
+
+\tableofcontents
+
+\section{One Factor Stochastic Interest Rates}
+One of the great features of the particle method is that it easily extends to
+the case where interest rates are also stochastic. An LSVM with stochastic
+interest rates (SIR-LSVM) is defined in a risk-neutral measure  $ \mathbb{Q}  $ by:
+
+\begin{equation}  \label{eq:spot} dS_t=r_tS_t dt + \sigma(t,S_t)a_t S_tdW_t 
+\end{equation}
+
+where the short term rate $r_t$ and the stochastic volatility $a_t$ are Ito processes.
+\subsection{The Calibration Condition}
+In this case the calibration condition reads:
+
+\begin{equation} \label{eq:calibration_condition_spot} \sigma(t,K)^2 \frac{\mathbb{E}^{\mathbb{Q}}[ D_{0t}a_t^2 | S_t = K ]}{ \mathbb{E}^{\mathbb{Q}}[ D_{0t} | S_t = K ] } = \sigma_{Dup}(t,K) ^2 - \frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) },
+\end{equation}
+
+where the discount factor $ D_{0t}$ is given by $ D_{0t}=exp\bigg(-\int_0^t r_sds\bigg)$ and
+
+$r_t^0 = \mathbb{E}^{\mathbb{Q}^t} [r_t] = -\partial_t\log P_{0t}$, with $ P_{st} $ the time-$s$ value of the bond of maturity $t$.\\
+
+From the calibration condition (\ref{eq:calibration_condition_spot}), the dynamics of the calibrated SIR-LSVM read as the following nonlinear McKean diffusion: 
+
+$$ dS_t=r_tS_t dt + \sigma(t,S_t,\mathbb{Q}_t)a_t S_tdW_t .$$
+
+Alternatively, it reads as the following nonlinear McKean diffusion for the
+forward $f_t = S_t/P_{tT}$ in the forward measure $\mathbb{Q}^T$ , where $T$ denotes the last maturity date for which we want to calibrate the market smile:
+
+\begin{equation}\label{eq: forwardPrice}
+\frac{df_t}{f_t}= \sigma(t,P_{tT}f_t,\mathbb{Q}_t^T)a_t dW_t^T -\sigma_P^T(t)dB^T_t
+\end{equation} 
+
+where 
+
+\begin{equation}\label{eq: localVolatility_forward}
+\sigma(t,K,\mathbb{Q}_t^T)^2=\bigg( \sigma_{Dup}(t,K)^2-P_{0T} \frac{ \mathbb{E}^{\mathbb{Q}^T}[ P_{tT}^{-1}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } \bigg)\cdot  \frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1} | S_t = K ]}{ \mathbb{E}^{\mathbb{Q}^T}[ P_{tT}^{-1}a_t^2 | S_t = K ] }
+\end{equation}
+
+$ \sigma_P^T(t) $ is the volatility of the bond $ P_{tT}$, and $B^T_t$ the (possibly multi-dimensional) $\mathbb{Q}^T$-Brownian motion that drives the interest rate curve.
+
+\subsection{The Particle Method}
+A \textit{particle} is then described by the vector-valued process $(f_t^i,a^i_t,r_t^i)$, for $1\leq i \leq N$, where $N$ is the number of simulated particles.
+Using the representation (\ref{eq: localVolatility_forward}) for the local volatility, we then define:
+
+\begin{equation}\label{eq: discrete_localVol_general}
+\sigma_N(t,K)^2= \bigg( \sigma_{Dup}(t,K)^2 - P_{0T}\frac{\frac{1}{N}\sum_{i=1}^N (P_{tT}^{i})^{-1}(r_t^i-r_t^0)\mathbb{I}_{S_t^i>K} }{\frac{1}{2}K\partial^2_KC(t,K)}\bigg)\cdot\frac{\sum_{i=1}^N (P_{tT}^{i})^{-1} \delta_{t,N}(S_t^i-K)}{\sum_{i=1}^N (P_{tT}^{i})^{-1} (a_t^i)^2\delta_{t,N}(S_t^i-K)}
+\end{equation}
+
+and simulate:
+\begin{equation}\label{eq: discrete_forwardPrice}
+df_t^i = f_t^i\sigma_N(t,f_t^i P_{tT}^i)a_t^idW_t^i-f_t^i\sigma_P^{T,i}(t)dB_t^i
+\end{equation}
+
+\subsection{Acceleration Techniques}
+\begin{itemize}
+\item Not necessary to compute the sum in (\ref{eq: discrete_localVol_general}) for all $i$
+\item Save time: compute $\sigma_N$ for a grid $G_{K,t}$ of values of $K$ with size $N_{K,t}<N$
+\item Then inter- and extra-polate (cubic splines)
+\end{itemize}
+
+\smallskip
+\begin{itemize}
+\item Moreover: a large number of terms in the sum in (\ref{eq: discrete_localVol_general}) is negligible
+\item Disregard $f_t^i$. when it is far from $K$, i.e., $\delta_{t,N}(S_t^i-K) < \eta$ ($\eta$ being a threshold)
+\item This requires sorting the particles according to the spot value
+\item The cost $O(N\ln N)$ is compensated by the acceleration with the grid
+\end{itemize}
+
+\subsection{Malliavin representation of the local volatility}\label{subsec: malliavinGeneral}
+Thanks to an application of the Clark-Ocone's formula we can give another expression of the contribution of stochastic interest rates to local volatility:
+\begin{equation}\label{eq: malliavinRepresentation}
+\frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } = \frac{2}{K}\int _0^t \mathbb{E}^{\mathbb{Q}^t}[\sigma_r^t(s)\cdot \MD _s^{B^t}S_t  |S_t = K ]ds
+\end{equation}
+
+where $ \MD_s^{B^t} $ is the Malliavin derivative with respect to the Brownian motion $B^t$.
+This brings few different benefits:
+\begin{itemize}
+\item[1.] instead of an unconditional expectation we get a conditional expectation given $ S_t = K $ (easier for MC);
+\item[2.] the term $\partial_K^2C$ cancels out: fortunate case as it is sensitive to the strike interpolation/extrapolation method;
+\item[3.] both $\mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]$ and $K\partial_K^2C$ are very small for strikes $K$ that are far from the money. Hence we get rid of a problematic $0/0$ ratio.
+\end{itemize}
+By specifying a particular model for the interest rate and computing the Malliavin derivative in (\ref{eq: malliavinRepresentation}), one gets more explicit formulas for the interest rate contribution to the local volatility.
+We shall see this applied to case of the Hull-White model.
+
+\section{One Factor hybrid Hull-White/Dupire model}
+Assume now that $a_t \equiv 1$. We consider the particular case where $r_t$ follows the Hull-White model:
+
+\begin{equation}\label{eq: hull_white}
+dr_t = \kappa\big(\theta(t)-r_t\big)dt+\sigma_r dB_t
+\end{equation}
+with $B$ is $\mathbb{Q}$-Brownian motion, correlated with $W$, the correlation being $\rho$.
+
+The function $ \theta(t)$ is chosen such that the zero coupon curve observed at $t = 0$ is matched:
+$$\theta(t) = \frac{1}{\kappa}\frac{\partial f^{mkt}}{\partial t}(0,t)+f^{mkt}(0,t)+\frac{\sigma_r^2}{2\kappa^2}(1-e^{-2\kappa t})  $$
+where
+$$f^{mkt}(0,t)=-\frac{\partial\ln P_{0t}^{mkt}}{\partial t} = r_t^0$$
+
+The bond prices are given by:
+\begin{equation}\label{eq: bondPrice_hullWhite}
+P_{tT}= \frac{P_{0T}^{mkt}}{P_{0t}^{mkt}}\exp\bigg( -A(t,T)(r_t-r_t^0)-\frac{\sigma_r^2}{4\kappa^3}(e^{-\kappa T}-e^{-\kappa t})^2(e^{2\kappa t}-1)     \bigg)
+\end{equation}
+where
+$$A(t,T)= \frac{1-e^{ -\kappa(T-t) }}{\kappa}$$
+and the volatility of the zero-coupon bond is 
+$$\sigma_P^T(t)=-\sigma_r A(t,T)$$\\
+
+In view of simulating all processes under the terminal forward measure $\mathbb{Q}^T$ ,
+we aim at writing $r_t -r_t^0$ in terms of the $\mathbb{Q}^T$-Brownian motion
+$$ B^T_t=B_t-\int_0^t\sigma_P^T(s)ds=B_t+\sigma_r\int_0^tA(s,T)ds $$
+
+After computations the explicit solution to (\ref{eq: hull_white}) under the $\mathbb{Q}^T$-measure is:
+\begin{equation}\label{eq: hullWhiteSolution}
+r_t -r_t^0= e^{-\kappa t}\bigg(\sigma_r\int_0^t e^{\kappa s}dB_s^T-\frac{\sigma_r^2}{\kappa^2}\sinh(\kappa t)\big(1-e^{-\kappa(T-t)} \big)   \bigg)
+\end{equation}
+
+\subsection{Malliavin representation under Hull-White}\label{subsec: malliavin1F}
+Under these assumptions, (\ref{eq: malliavinRepresentation}) reads:
+
+\begin{equation}\label{eq: malliavinHullWhite}
+\frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } = 
+2\sigma_re^{-\kappa t}\mathbb{E}^{\mathbb{Q}^t}[ V_t(\rho U_t + \Theta_t\Xi_t-\Lambda_t)|S_t = K]
+\end{equation}
+
+where:
+\begin{align*}
+  \frac{dV_t}{V_t} &= S_t\partial_S\sigma(t,S_t)\{dW_t^T + [\rho\sigma_P^T(t,r_t)- \sigma(t,S_t) ]dt\} ,\ \ V_0=1\\
+  U_t &= \int_0^te^{\kappa s}\frac{\sigma(s,S_s)}{V_s}ds\\ \numberthis \label{eq: malliavinWeights}
+  \Theta_t &= \int_0^t\frac{e^{-\kappa s}}{V_s}ds \\  
+  \Lambda_t &= \int_0^t\sigma_re^{2\kappa s}\Theta_s ds\\
+  \Xi_t &= \sigma_r\frac{e^{2\kappa t}-1}{2\kappa}
+\end{align*}
+
+The computation of (\ref{eq: malliavinHullWhite}) for all $t$, requires the simulation of only 3 processes
+$f_t$, $r_t$, $V_t$, and 3 integrals $U_t$, $\Theta_t$, $\Lambda_t$.
+The local volatility (\ref{eq: localVolatility_forward}) can be now rewritten as:
+
+\begin{align*}
+\sigma(t,K,\mathbb{Q}_t^T)^2=  \sigma_{Dup}(t,K)^2 &-2\sigma_r\rho e^{-\kappa t}\frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}V_tU_t|S_t=K]}{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}|S_t=K]} \\ 
+ &  -2\sigma_r e^{-\kappa t}\frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}V_t(\Theta_t\Xi_t-\Lambda_t)|S_t=K]}{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}|S_t=K]} \numberthis \label{eq: localVolatility_forward_HullWhite}
+\end{align*}
+
+\subsection{The Particle Method - Hull White }
+In the particle algorithm for the hybrid Hull-White/Dupire model, a particle can then be described by $(f_t, r_t- r^0_t )$. Simulate the $T$-forward price $f_t = S_t/P_{tT}$ under the final forward measure as follows:
+$$ df_t^i=  f_t^i\sigma_N(t,f_t^iP_{tT}^i)dW_t^i-f_t^i\sigma_r A(t,T)dB_t^i $$
+where $B^i$ and $W^i$ are $\mathbb{Q}^T$-Brownian motions.\\
+Using the representation (\ref{eq: localVolatility_forward_HullWhite}) for the local volatility, we define:
+
+\begin{align*}
+\sigma_N(t,K)^2 = \sigma_{Dup}(t,K)^2 & -2\sigma_r\rho e^{-\kappa t}\frac{\sum_{i=1}^N \Pi_t^{i} V_t^iU_t^i \delta_{t,N}(S_t^i-K) }{\sum_{i=1}^N \Pi_t^{i} \delta_{t,N}(S_t^i-K)} \\
+&  -2\sigma_r e^{-\kappa t}\frac{\sum_{i=1}^N \Pi_t^{i}V_t^i(\Theta^i_t\Xi^i_t-\Lambda^i_t)\delta_{t,N}(S_t^i-K) }{\sum_{i=1}^N \Pi_t^{i} \delta_{t,N}(S_t^i-K)} \numberthis \label{eq: discrete_localVolatility_forward_HullWhite}
+\end{align*}
+
+with:
+
+$$ \Pi_t^{i} = \exp\bigg( A(t,T)(r_t^i-r_t^0)+\frac{\sigma_r^2}{4\kappa^3}(e^{-\kappa T}-e^{-\kappa t})^2(e^{2\kappa t}-1)     \bigg) $$
+
+\subsection{Time discretization}
+As anticipated before, at each iteration of the algorithm and for each particle, we need to simulate 3 processes
+$f_t$, $r_t$, $V_t$, and compute 3 integrals $U_t$, $\Theta_t$, $\Lambda_t$.
+
+\subsubsection{Processes: $f_t$ and $r_t$}
+Let $\{t_j\}$ be a discretization of $[0,T]$ and consider a single particle.\\
+In order to simulate $(f_{t_{j+1}}, r_{t_{j+1}} - r^0_{t_{j+1}})$ from $(f_{t_{j}}, r_{t_{j}} - r^0_{t_{j}})$, one can observe that, from (\ref{eq: hullWhiteSolution}):
+
+\begin{align*}
+r_{t_{j+1}}& - r^0_{t_{j+1}}  =  e^{-\kappa(t_{j+1}-t_j) }(r_{t_{j}} - r^0_{t_{j}})+\sigma_r\int_{t_j}^{t_{j+1}}e^{-\kappa(t_{j+1}-t) }dB_t^T \\
+& - \frac{\sigma^2_r}{\kappa^2}e^{-\kappa t_{j+1} }\big( \sinh(\kappa t_{j+1})(1-e^{-\kappa(T-t_{j+1}) })-\sinh(\kappa t_{j})(1-e^{-\kappa(T-t_{j}) }) \big) \numberthis \label{eq: discretization_interestRate}
+\end{align*}
+
+and use the following approximation scheme for $f_t$:
+
+\begin{align*}
+f_{t_{j+1}}& = f_{t_{j}} \exp\bigg(  \sigma(t_j,P_{t_j T}f_{t_j})(W_{t_{j+1}}^T-W^T_{t_{j}})+\sigma_r\int_{t_j}^{t_{j+1}} \frac{1-e^{-\kappa(T-t)}}{\kappa}dB_t^T \\
+& -\frac{1}{2}(t_{j+1}-t_{j})\big(\sigma(t_j,P_{t_j T}f_{t_j})^2+2\rho\sigma_r\sigma(t_j,P_{t_j T}f_{t_j})I^1_j + \sigma_r^2I_j^2\big)  \    \bigg) \numberthis \label{eq: discretization_forwardPrice}
+\end{align*}
+with 
+\begin{align*}
+& I^1_j = \frac{\kappa(t_{j+1}-t_{j})-e^{-\kappa T }(e^{\kappa t_{j+1} }-e^{\kappa t_{j} }) }{\kappa^2 (t_{j+1}-t_{j})} \\
+& I^2_j = \frac{\kappa(t_{j+1}-t_{j})  -2e^{-\kappa T }(e^{\kappa t_{j+1} }-e^{\kappa t_{j} }) +\frac{1}{2}e^{-2\kappa T }(e^{2\kappa t_{j+1} }-e^{2\kappa t_{j} }) }{\kappa^3(t_{j+1}-t_{j})}
+\end{align*}
+Then the simulation of $(f_{t_{j+1}}, r_{t_{j+1}} - r^0_{t_{j+1}})$ boils down to simulate exactly the Gaussian vector
+\[\bigg( W_{t_{j+1}}^T-W^T_{t_{j}},  \int_{t_j}^{t_{j+1}}e^{-\kappa(t_{j+1}-t) }dB_t^T  ,\int_{t_j}^{t_{j+1}} \frac{1-e^{-\kappa(T-t)}}{\kappa}dB_t^T \bigg)  \]
+whose covariance matrix is $(t_{j+1}-t_{j})\Sigma_j$ where
+\[\Sigma_j= \left( \begin{array}{ccc}
+1 & \rho J_j^1 & \rho I_j^1 \\ 
+\rho J_j^1 & J_j^2 & L_j \\ 
+\rho I_j^1 & L_j & I^2_j \end{array} \right)\] 
+with
+\begin{align*}
+& J_j^1 = \frac{1-e^{-\kappa(t_{j+1}-t_j) }}{\kappa(t_{j+1}-t_j)} \\
+& J_j^2 = \frac{1-e^{-2\kappa(t_{j+1}-t_j) } }{2\kappa(t_{j+1}-t_j)} \\
+& L_j = \frac{J_j^1}{\kappa}-e^{-\kappa(T + t_{j+1}) } \frac{ e^{2\kappa t_{j+1} }-e^{2\kappa t_{j} }  }{2\kappa^2(t_{j+1}-t_{j})}
+\end{align*}
+\subsubsection{Process: $V_t$}
+For $V_t$ we shall start with a plain Euler discretization scheme. Refinements might follow.\\
+The computation of the partial derivative $\partial_S\sigma$ in $V_t$ will be addressed in dependence on the chosen interpolation technique.
+\subsubsection{Integrals: $U_t$, $\Theta_t$, $\Lambda_t$}
+First note that $V_t$ is computed over the time grid $\{t_j\}$, hence it is a discrete vector of values.
+Therefore we set $ V_t = (V_{t_{j+1}}+V_{t_{j}})/2 $ for all $t\in [t_j,t_{j+1}]$. Same reasoning applies for $\Theta_t$.\\
+From (\ref{eq: malliavinWeights}) we have: 
+
+\begin{align*}
+\Theta_{t_{j+1}} & =  \int_0^{t_{j+1}}\frac{e^{-\kappa s}}{V_s}ds = \Theta_{t_{j}} + \int_{t_j}^{t_{j+1}}\frac{e^{-\kappa s}}{V_s}ds = 
+\Theta_{t_{j}} + \frac{2}{(V_{t_{j+1}}+V_{t_{j}})}\int_{t_j}^{t_{j+1}}e^{-\kappa s}ds = \\
+ & = \Theta_{t_{j}} - \frac{2}{(V_{t_{j+1}}+V_{t_{j}})}\frac{1}{\kappa}(e^{-\kappa t_{j+1}}-e^{-\kappa t_{j}} )\\ \\
+\Lambda_{t_{j+1}} &= \int_0^{t_{j+1}}\sigma_re^{2\kappa s}\Theta_s ds = \Lambda_{t_{j}} + \int_{t_j}^{t_{j+1}}\sigma_re^{2\kappa s}\Theta_s ds = \Lambda_{t_{j}} + \frac{(\Theta_{t_{j+1}} +\Theta_{t_{j}} )}{2}\sigma_r\int_{t_j}^{t_{j+1}}e^{2\kappa s} =\\
+& = \Lambda_{t_{j}} + \frac{(\Theta_{t_{j+1}} +\Theta_{t_{j}} )}{4\kappa}\sigma_r(e^{2\kappa t_{j+1}} - e^{2\kappa t_{j}})
+\end{align*}
+\\
+A more careful analysis is needed for $U_t$ as it involves the integration of the local volatility function.
+From (\ref{eq: malliavinWeights}) we have:
+$$  U_{t_{j+1}} = \int_0^{t_{j+1}}e^{\kappa s}\frac{\sigma(s,S_s)}{V_s}ds =  U_{t_{j}} +  \int_{t_{j}}^{t_{j+1}}e^{\kappa s}\frac{\sigma(s,S_s)}{V_s}ds$$
+From step 4 in the algorithm at section \ref{subsec: algorithm}, we have that $\sigma(t,K)\equiv \sigma_N(t_j,K)$ for all $t\in [t_j,t_{j+1}]$, hence we can rewrite the integral as: 
+$$ U_{t_{j+1}} = U_{t_{j}} +  \frac{2}{(V_{t_{j+1}}+V_{t_{j}})}\int_{t_{j}}^{t_{j+1}}e^{\kappa s}\sigma(t_j,S_s)ds $$
+
+\IfFileExists{volatility.jpg}{\centerline{\includegraphics[scale=0.5]{volatility.jpg}}}{\centerline{\fbox{\parbox{0.6\textwidth}{\centering\small [figure \texttt{volatility.jpg}: place the file next to this source]}}}}
+\bigskip
+Now we have two possibilities:
+\begin{itemize}
+\item approximate $\sigma(t_j,S_s)$ as $[ \sigma(t_j,S_{t_{j+1}}) + \sigma(t_j,S_{t_j}) ]/2$ or $\sigma(t_j,\frac{S_{t_{j+1}} +S_{t_{j}}}{2}) $ and analytically solve the remaining integral
+\item apply numerical integration techniques to the integral 
+\end{itemize}
+The advantage of the first approach is that it is faster to compute and does not depend on the interpolation of the local volatility but it could imply non-negligible errors in the case $S_{t_j}$ is far from $S_{t_{j+1}}$.
+The numerical integration might be slower to compute and one should pay attention at the interpolation algorithm used for the local volatility. However it provides a more accurate approximation of the integral, hence we may choose it above the former.
+
+\subsubsection*{Trapezoidal rule for $U_t$}
+If using a trapezoidal rule, $U_{t_{j+1}}$ reads:
+$$ U_{t_{j+1}} = U_{t_{j}} +  \frac{(t_{j+1}-t_j)}{(V_{t_{j+1}}+V_{t_{j}})}\big[\sigma(t_j,S_{t_j})e^{\kappa t_j}+ \sigma(t_j,S_{t_{j+1}})e^{\kappa t_{j+1}} \big] $$
+
+\subsubsection*{Cavalieri-Simpson rule for $U_t$}
+If using a Cavalieri-Simpson rule, $U_{t_{j+1}}$ reads:
+$$ U_{t_{j+1}} = U_{t_{j}} +  \frac{1}{3}\frac{(t_{j+1}-t_j)}{(V_{t_{j+1}}+V_{t_{j}})}\big[\sigma(t_j,S_{t_j})e^{\kappa t_j}+  4\sigma\big(t_j,\frac{S_{t_{j+1}} +S_{t_{j}}}{2}\big)e^{\kappa \frac{t_{j+1}+t_{j}}{2}}   +\sigma(t_j,S_{t_{j+1}})e^{\kappa t_{j+1}} \big] $$
+\smallskip
+
+\subsection{The Algorithm}\label{subsec: algorithm}
+Let $\{t_j\}$ be a discretization of $[0,T]$:
+
+\begin{itemize}
+\item[1.] Initialize $j=1$ and set $\sigma_N(t,K)=\sigma_{Dup}(0,K)$ on the first time step
+\item[2.] Simulate the $N$ particles  $\{(f_t^i, r_t^i- r^0_t) \}_{1\leq i\leq N}$ from  $t_{j}$ to  $t_{j+1}$ using  (\ref{eq: discretization_interestRate}) and (\ref{eq: discretization_forwardPrice}) 
+\item[3.] For each particle, simulate $V_{t_{j+1}}^i$ and compute the integrals $U_{t_{j+1}}^i$, $\Theta_{t_{j+1}}^i$, $\Lambda_{t_{j+1}}^i$ according to (\ref{eq: malliavinWeights})
+\item[4.] Sort the particles according to the spot value. For $K\in G_{K,t_j}$, find the smallest index $i(K)$ and the largest $j(K)$ for which $\delta_{t,N}(S_t^i-K) > \eta$. Compute the local volatility.
+\begin{itemize}
+\item Interpolate it and extrapolate it
+\item Set $\sigma(t,K)\equiv \sigma_N(t_j,K)$ for all $t\in [t_j,t_{j+1}]$
+\end{itemize}
+\item[5.] Set $j:=j+1$, iterate steps 2,3 and 4 up to maturity T
+\end{itemize}
+
+\subsection{An equivalent one-process form}\label{subsec: oneProcess}
+The five objects $V_t,U_t,\Theta_t,\Lambda_t,\Xi_t$ can be replaced by a single process. Define
+$$ \ell_t := \sigma_r e^{-\kappa t}\,V_t\big(\rho U_t+\Theta_t\Xi_t-\Lambda_t\big). $$
+Since $\rho U_t+\Theta_t\Xi_t-\Lambda_t$ has finite variation, with
+$d(\rho U_t+\Theta_t\Xi_t-\Lambda_t)=V_t^{-1}\big(\rho e^{\kappa t}\sigma(t,S_t)+e^{-\kappa t}\Xi_t\big)dt$,
+It\^o's formula gives
+\begin{equation}\label{eq: oneProcess}
+d\ell_t=\ell_t\Big[g(t,S_t)\big(dW_t-\sigma(t,S_t)dt\big)-\kappa\,dt\Big]
++\Big[v(t)+\rho\,\sigma_r\,\sigma(t,S_t)\Big]dt,\qquad \ell_0=0,
+\end{equation}
+where
+$$ g(t,S)=S\,\partial_S\sigma(t,S),\qquad v(t)=\sigma_r^2\,\frac{1-e^{-2\kappa t}}{2\kappa}, $$
+and $W$ is the $\mathbb{Q}$-Brownian motion, $dW_t=dW^T_t+\rho\,\sigma_P^T(t)dt$. Note that $v(t)$ is the variance of the Hull-White state at time $t$.
+The right hand side of (\ref{eq: malliavinHullWhite}) is then $2\,\mathbb{E}^{\mathbb{Q}^t}[\ell_t\,|\,S_t=K]$ and (\ref{eq: discrete_localVolatility_forward_HullWhite}) becomes
+\begin{equation}\label{eq: oneProcessParticle}
+\sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2-2\,\frac{\sum_{i=1}^N\Pi^i_t\,\ell^i_t\,\delta_{t,N}(S^i_t-K)}{\sum_{i=1}^N\Pi^i_t\,\delta_{t,N}(S^i_t-K)} .
+\end{equation}
+One Euler step of (\ref{eq: oneProcess}) per particle replaces the simulation of $V_t$ and the three quadratures of the previous section. This is the form that extends to the three-factor model of Section \ref{sec: threeFactor}: there, $\ell_t$ is the logarithmic sensitivity of the spot to a perturbation of the rate driver along the Hull-White kernel.
+
+\section{Three Factor IR - Long-dated FX Derivatives}\label{sec: threeFactor}
+While for short-dated options (less than 1 year), assuming constant interest rates does not lead to
+significant mispricing, for long-dated options the effect of interest rate volatility becomes increasingly
+pronounced with increasing maturity and can become as important as that of the FX spot volatility.
+
+Here we consider a three factor model in which uncertainty in the spot process is explained by a geometric Brownian motion and both the domestic and foreign interest rates follow Hull-White processes.
+To incorporate smile/skew effects in the three-factor pricing model, we introduce a Local Volatility function in the spot process.
+
+The goal of this section is to explicitly derive the Particle Algorithm of \cite{guyonLabordere} in a Three Factor Local Volatility Stochastic Interest Rate (SIR-LV) framework. We derive the calibration condition for one factor stochastic domestic and foreign rates with unspecified dynamics, and then, for Hull-White rates, a Malliavin representation of it which can be evaluated with a single system of particles.
+
+Monte Carlo calibration of local volatility in an FX setting with two stochastic rates is studied in \cite{ogetbilGanesanHientzsch} (see also \cite{ogetbilHientzsch} for the corresponding Dupire formula), and a particle method with control variates for a four-factor FX local-stochastic volatility model in \cite{cozma}; an optimal transport approach to stochastic-rates calibration is developed in \cite{josephLoeperObloj}.
+
+\subsection{The Three Factor model with Local Volatility }
+The model is fully described by the following SDEs:
+\begin{align*}
+ dS_t   = &\ (r^d_t - r^f_t)S_t dt + \sigma(t,S_t)S_tdW^S_t \\
+ dr_t^d  = &\  \mu^d_t dt + \sigma_t^d dB_t^d \numberthis \label{eq: threeFactorModel}\\
+ dr_t^f  = & \ \big(\mu^f_t - \rho_{Sf}\sigma(t,S_t)\sigma_t^f \big)dt + \sigma_t^f dB_t^f
+\end{align*}
+where $S_t$ is the spot, $r_t^d$ and $r_t^f$ the domestic and foreign interest rates respectively.\\
+The volatility of the spot FX rate is the local volatility function $\sigma(t,S_t)$.
+At this stage the dynamics for the two interest rates are left unspecified to let the framework as general as possible. The stochastic vector $(W^S_t, B_t^d, B_t^f)$ is a Brownian Motion under the domestic risk-neutral measure $\mathbb{Q}^d$ with correlation matrix
+\[R=\left( \begin{array}{ccc}
+1 & \rho_{Sd} & \rho_{Sf} \\
+\rho_{Sd} & 1 & \rho_{df} \\
+\rho_{Sf} & \rho_{df} & 1 \end{array} \right)\]
+The term $-\rho_{Sf}\sigma(t,S_t)\sigma^f_t$ in the drift of the foreign rate is the quanto adjustment: under the foreign risk-neutral measure $\mathbb{Q}^f$ the foreign rate has drift $\mu^f_t$.
+
+\paragraph{Measures.} The domestic and foreign discount factors are $ D_{0t}^i=\exp\big(-\int_0^t r_s^ids\big)$ for $i\in\{d,f\}$. The foreign risk-neutral measure is defined by (section 2.8 and p.256 in \cite{clark})
+\begin{equation}\label{eq: RNforeign}
+\left.\frac{d\mathbb{Q}^f}{d\mathbb{Q}^d}\right|_{\mathcal{F}_t}=\frac{S_tD^d_{0t}}{S_0D^f_{0t}}
+=\exp\bigg( \int_0^t\sigma(s,S_s) dW^S_s - \frac{1}{2}\int_0^t\sigma(s,S_s)^2 ds\bigg),
+\end{equation}
+so that, denoting with a tilde the Brownian motions under $\mathbb{Q}^f$,
+\begin{align*}
+dW^S_t = &\ d\widetilde{W}^{S}_t + \sigma(t,S_t)dt \\
+dB^d_t = &\ d\widetilde{B}^{d}_t + \rho_{Sd}\sigma(t,S_t)dt  \numberthis \label{measureChange: domesticToForeign}\\
+dB^f_t = &\ d\widetilde{B}^{f}_t + \rho_{Sf}\sigma(t,S_t)dt
+\end{align*}
+Note that the spot driver is shifted by the full $\sigma(t,S_t)$, and that the Girsanov kernel is a function of the state. We write $\mathbb{Q}^{d^T}$ and $\mathbb{Q}^{f^T}$ for the domestic and foreign $T$-forward measures, with numeraires $P^d_{tT}$ and (in foreign currency) $P^f_{tT}$.
+
+\subsection{The Calibration Condition}
+In the proposition below, we give a necessary and sufficient condition for a three factor SIR-LVm to be calibrated to a given market smile. $C(t,K)$ denotes the fair market value of a European call option with strike $K$ and maturity $t$.
+From \cite{deelstraRayee}, the Dupire volatility is of the form:
+\begin{equation}\label{eq: threeFactorDupireVolatility}
+\sigma_{Dup}^2(t,K) =
+\frac{  \partial_t C(t,K) + (r_d^0 - r_f^0)K\partial_K C(t,K)+ r_f^0 C(t,K)}
+{ \frac{1}{2}K^2\partial^2_K C(t,K) }
+\end{equation}
+where $r_i^0 = r_i^0(t)= \mathbb{E}^{i^t} [r^i_t] = -\partial_t\ln P^{i}_{0t}$ is the market instantaneous forward rate, $\mathbb{E}^{i^t}$ being the expectation under the $t$-forward domestic and foreign measures for $i = d, i=f$ respectively.
+
+\begin{prop}[Calibration of 3-Factor SIR-LVm to market smiles]\label{prop: calibration}\ \\
+The model (\ref{eq: threeFactorModel}) is exactly calibrated to the market smile if and only if
+\begin{align*}
+\sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 & - \frac{ \mathbb{E}^d[ D_{0t}^d(r_t^d-r^0_d)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) }\\
+ &+ S_0\frac{ \mathbb{E}^f[ D_{0t}^f(r_t^f-r^0_f)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K^2\partial^2_KC(t,K) }\numberthis \label{eq: threeFactorCalibrationCondition}
+\end{align*}
+or, equivalently, under the domestic measure only,
+\begin{equation}\label{eq: singleMeasure}
+\sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 - \frac{ \mathbb{E}^d\big[ D_{0t}^d\big(K(r_t^d-r^0_d)-S_t(r_t^f-r^0_f)\big)\mathbb{I}_{S_t>K} \big]}{ \frac{1}{2}K^2\partial^2_KC(t,K) }
+\end{equation}
+\end{prop}
+
+\begin{proof}\ \\
+I follow the proof of Proposition 11.1 in \cite{guyonLabordere} and show that my result is just an easy generalisation of (\ref{eq:calibration_condition_spot}). \\
+Define $\mathcal{P}_t\equiv D^d_{0t}(S_t-K)^+$ to be the discounted vanilla call payoff with maturity $t$ and strike $K$ under the domestic measure. By applying Ito-Tanaka's formula on such payoff, we get:
+
+\begin{align*}
+d\mathcal{P}_t  = & - r_t^d D^d_{0t}(S_t-K)^+dt + D^d_{0t}S_t\mathbb{I}_{S_t>K} \{ (r_t^d-r_t^f)dt + \sigma(t,S_t)dW^S_t \}\\
+& + \frac{1}{2} D^d_{0t}\delta_K(S_t)S^2_t\sigma(t,S_t)^2dt \\
+= &  - r_t^d D^d_{0t}S_t\mathbb{I}_{S_t>K}dt + r_t^d D^d_{0t}K\mathbb{I}_{S_t>K}dt + r_t^d D^d_{0t}S_t\mathbb{I}_{S_t>K}dt\\
+&  -r_t^f D^d_{0t}S_t\mathbb{I}_{S_t>K}dt + D^d_{0t}\mathbb{I}_{S_t>K}\sigma(t,S_t)S_tdW^S_t+ \frac{1}{2} D^d_{0t}\delta_K(S_t)K^2\sigma(t,K)^2dt\\
+= & D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d K- r_t^f S_t)dt +  D^d_{0t}\mathbb{I}_{S_t>K}\sigma(t,S_t)S_tdW^S_t 
++ \frac{1}{2} D^d_{0t}\delta_K(S_t)\sigma(t,K)^2K^2 dt
+\end{align*}
+By taking the expectation $\mathbb{E}^d[\cdot]$ on both sides of the above equation and by assuming that $ M_t =\int_0^tD^d_{0s}\mathbb{I}_{S_s>K}\sigma(s,S_s)S_s dW^S_s$ is a true martingale, we get
+$$ \partial_tC_m(t,K)= \mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d K- r_t^f S_t) \big] + \frac{1}{2}\sigma(t,K)^2K^2 \mathbb{E}^d\big[ D^d_{0t}\delta_K(S_t) \big]$$
+where $C_m(t,K)= \mathbb{E}^d[\mathcal{P}_t]$ is the price of the call option in the model.\\
+By using that $\partial_K^2C_m(t,K)= \mathbb{E}^d\big[ D^d_{0t}\delta_K(S_t) \big] $, we rewrite
+\begin{align*}
+\partial_tC_m(t,K) = &\ \mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d K- r_t^f S_t) \big] + \frac{1}{2}\sigma(t,K)^2K^2\partial_K^2C_m(t,K)\\
+= &\ \mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d - r_d^0 )K \big] + \mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K} r_d^0 K \big] \\
+&-\mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )S_t \big] - \mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K} r_f^0 S_t \big]\\
+& + \frac{1}{2}\sigma(t,K)^2K^2\partial_K^2C_m(t,K)
+\end{align*}
+
+Now I am going to rewrite the term in $r^f$ under the foreign measure. From section 2.8 in \cite{clark}, one has that the Radon–Nikodym derivative of $\mathbb{P}^f$ with respect to $\mathbb{P}^d$ is
+$$ \frac{d\mathbb{P}^f}{d\mathbb{P}^d}=\exp\bigg( \int_0^t\sigma(s,S_s) dW^S_s - \frac{1}{2}\int_0^t\sigma(s,S_s)^2 ds\bigg)$$
+Hence:
+\begin{align*}
+& \mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )S_t \big] \\
+& = \mathbb{E}^d\bigg[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )S_0\exp\bigg( \int_0^t (r_s^d - r_s^f)ds + \int_0^t\sigma(s,S_s) dW^S_s - \frac{1}{2}\int_0^t\sigma(s,S_s)^2 ds \bigg) \bigg] \\
+& =  S_0\mathbb{E}^d\bigg[\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\exp\bigg( -\int_0^t r_s^fds\bigg)\cdot\exp\bigg( \int_0^t\sigma(s,S_s) dW^S_s - \frac{1}{2}\int_0^t\sigma(s,S_s)^2 ds \bigg)  \bigg] \\
+& =  S_0\mathbb{E}^d\bigg[D^f_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\frac{d\mathbb{P}^f}{d\mathbb{P}^d}\bigg]\\
+& =  S_0\mathbb{E}^f\big[D^f_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\big]
+\end{align*}
+Together with the fact that $\partial_K C_m(t,K)= -\mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K} \big] $, one has
+\begin{align*}
+\partial_tC_m(t,K) = & \ K\mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d - r_d^0 )\big] -  S_0\mathbb{E}^f\big[D^f_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\big]\\
+&- K \partial_K C_m(t,K)r_d^0 - r_f^0\mathbb{E}^d[D^d_{0t}\mathbb{I}_{S_t>K} S_t]+ \frac{1}{2}\sigma(t,K)^2K^2\partial_K^2C_m(t,K)\\
+= & \ K\mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d - r_d^0 )\big] -  S_0\mathbb{E}^f\big[D^f_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\big]\\
+& - r_d^0 K \partial_K C_m(t,K) - r_f^0\mathbb{E}^d[D^d_{0t}(S_t-K)^+]- r_f ^0K\mathbb{E}^d[D^d_{0t}\mathbb{I}_{S_t>K}]\\
+& + \frac{1}{2}\sigma(t,K)^2K^2\partial_K^2C_m(t,K)\\
+= & \ K\mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d - r_d^0 )\big] -  S_0\mathbb{E}^f\big[D^f_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\big]\\
+& - (r_d^0 - r_f^0) K \partial_K C_m(t,K) - r_f^0 C_m(t,K)  \\
+& + \frac{1}{2}\sigma(t,K)^2K^2\partial_K^2C_m(t,K)
+\end{align*}
+So the model is calibrated to the market smile if and only if 
+\begin{align*}
+\partial_tC(t,K) =  & \ K\mathbb{E}^d\big[ D^d_{0t}\mathbb{I}_{S_t>K}(r_t^d - r_d^0 )\big] -  S_0\mathbb{E}^f\big[D^f_{0t}\mathbb{I}_{S_t>K}(r_t^f - r_f^0 )\big]\\
+& - (r_d^0 - r_f^0) K \partial_K C(t,K) - r_f^0 C(t,K)  \\
+& + \frac{1}{2}K^2\sigma(t,K)^2\partial_K^2C(t,K)
+\end{align*}
+The result follows easily from the definition of $\sigma_{Dup}(t,K)$ in (\ref{eq: threeFactorDupireVolatility}).
+\end{proof}
+
+\begin{rem}
+The equivalence of (\ref{eq: threeFactorCalibrationCondition}) and (\ref{eq: singleMeasure}) is the identity $D^d_{0t}S_t=S_0D^f_{0t}\,\frac{d\mathbb{Q}^f}{d\mathbb{Q}^d}$ used in the proof. In the case of absence of a foreign rate (i.e. $r^f_t\equiv 0$), we get the usual calibration condition in (\ref{eq:calibration_condition_spot}).
+\end{rem}
+
+The form (\ref{eq: singleMeasure}) is the one to use numerically: both rate corrections are expectations under the same measure. Restated under the domestic $T$-forward measure $\mathbb{Q}^{d^T}$ it reads
+\begin{equation}\label{eq: threeFactorCalibrationConditionForward}
+\sigma(t,K)^2 = \sigma_{Dup}(t,K)^2  - P^d_{0T}\frac{ \mathbb{E}^{\mathbb{Q}^{d^T}}\big[ (P^d_{tT})^{-1}\big(K(r_t^d-r^0_d)-S_t(r_t^f-r^0_f)\big)\mathbb{I}_{S_t>K} \big]}{ \frac{1}{2}K^2\partial^2_KC(t,K) }
+\end{equation}
+
+\subsection{The Particle Method}
+From Lemma 5.2.2 in \cite{hybridModel}, the model (\ref{eq: threeFactorModel}) under the domestic $T$-forward measure $\mathbb{Q}^{d^T}$ reads:
+\begin{align*}
+ \frac{df_t}{f_t}   = &\ \sigma(t,S_t)dW^{S^T}_t - \sigma_{P_{tT}}^d dB_t^{d^T} + \sigma_{P_{tT}}^f dB_t^{f^T} \\
+ dr_t^d  = &\  (\mu^d_t + \sigma_t^d\sigma_{P_{tT}}^d)dt + \sigma_t^d dB_t^{d^T} \numberthis \label{eq: threeFactorModelForward}\\
+ dr_t^f  = & \ \big(\mu^f_t - \rho_{Sf}\sigma(t,S_t)\sigma_t^f +\rho_{df}\sigma_t^f\sigma_{P_{tT}}^d \big)dt + \sigma_t^f dB_t^{f^T}
+\end{align*}
+where $f_t:=S_t P^f_{tT}/P^d_{tT}$ is the forward and $\sigma_{P_{tT}}^d$, $\sigma_{P_{tT}}^f$ the volatilities of the domestic $P^d_{tT}$ and foreign $P^f_{tT}$ bonds respectively.\\
+A \textit{particle} is then described by the vector-valued process $(f_t^i,r_t^{d,(i)},r_t^{f,(i)})$, for $1\leq i \leq N$, where $N$ is the number of simulated particles. Using the representation (\ref{eq: threeFactorCalibrationConditionForward}) for the local volatility, define:
+\begin{equation}\label{eq: discreteLocVol3FactorModel}
+\sigma_N(t,K)^2  =  \sigma_{Dup}(t,K)^2  - P^d_{0T}\frac{\frac{1}{N}\sum_{i=1}^N (P_{tT}^{d,(i)})^{-1}\big(K(r_t^{d,(i)}-r^0_d)-S^i_t(r_t^{f,(i)}-r^0_f)\big)\mathbb{I}_{S_t^i>K} }{\frac{1}{2}K^2\partial^2_KC(t,K)}
+\end{equation}
+All particles are simulated under $\mathbb{Q}^{d^T}$: no second system of particles under the foreign forward measure is needed. The estimator (\ref{eq: discreteLocVol3FactorModel}) still has the two drawbacks discussed in Section \ref{subsec: malliavinGeneral}: it depends on $\partial_K^2C$, and it is a ratio of two small quantities far from the money. The Malliavin representation of Section \ref{subsec: malliavin3F} removes both from the rates correction. It does not remove them from the problem: $\sigma_{Dup}$ itself still requires $\partial_K^2C$, and the kernel regression still needs particles near the strike, so whether the wings behave better in a full calibration remains to be tested.
+
+\subsection{Hull White Stochastic Interest Rates}\label{subsec: HW3F}
+Assume both the domestic and foreign rates follow Hull-White dynamics as in (\ref{eq: hull_white}), with parameters $(\kappa_i,\sigma^i_r)$, $i\in \{d,f\}$. It is convenient to work with the centred states $x^i_t$ defined by
+\begin{equation}\label{eq: centredStates}
+r^i_t=r^0_i(t)+\frac{(\sigma^i_r)^2}{2\kappa_i^2}\big(1-e^{-\kappa_it}\big)^2+x^i_t,\qquad x^i_0=0,
+\end{equation}
+which under $\mathbb{Q}^d$ follow (linear SDEs, see for instance \cite{bruti})
+\begin{align*}
+dx^d_t&=-\kappa_dx^d_t\,dt+\sigma^d_r\,dB^d_t\\
+dx^f_t&=\big(-\kappa_fx^f_t-\rho_{Sf}\sigma^f_r\,\sigma(t,S_t)\big)dt+\sigma^f_r\,dB^f_t
+\end{align*}
+In particular the centred rates
+$$ c^i_t:=r^i_t-r^0_i(t)=x^i_t+\frac{(\sigma^i_r)^2}{2\kappa_i^2}\big(1-e^{-\kappa_it}\big)^2 $$
+are known pathwise: the centring constant of the foreign rate is the market forward rate $r^0_f(t)=\mathbb{E}^{f^t}[r^f_t]$, which is \emph{not} $\mathbb{E}^{d^t}[r^f_t]$, and no expectation of $\sigma(s,S_s)$ has to be estimated.
+
+The domestic bond price as a function of the domestic rate, and the foreign bond price as a function of the foreign rate, are given as in (\ref{eq: bondPrice_hullWhite}):
+$$ P^i_{tT}= \frac{P_{0T}^{i,mkt}}{P_{0t}^{i,mkt}}\exp\bigg( -A^i(t,T)\,c^i_t-\frac{(\sigma^i_r)^2}{4\kappa_i^3}(e^{-\kappa_i T}-e^{-\kappa_i t})^2(e^{2\kappa_i t}-1) \bigg),\qquad A^i(t,T) = \frac{1-e^{ -\kappa_i(T-t) }}{\kappa_i}, $$
+and the volatilities of the bonds are $\sigma_{P_{tT}}^i=-\sigma^i_r A^i(t,T)$. The Brownian motions of $\mathbb{Q}^d$ and $\mathbb{Q}^{d^T}$ are related by
+\begin{align*}
+dW^{S}_t = &\ dW^{S^T}_t - \rho_{Sd}\sigma^d_r A^d(t,T)dt \\
+dB^{d}_t = &\ dB^{d^T}_t - \sigma^d_r A^d(t,T)dt  \numberthis \label{measureChange: domesticForwardToDomestic}\\
+dB^{f}_t = &\ dB^{f^T}_t - \rho_{df}\sigma^d_r A^d(t,T)dt
+\end{align*}
+and the model (\ref{eq: threeFactorModelForward}) now reads, with $S_t=f_tP^d_{tT}/P^f_{tT}$:
+\begin{align*}
+ \frac{df_t}{f_t}   = &\ \sigma(t,S_t)dW^{S^T}_t + \sigma^d_r A^d(t,T) dB_t^{d^T} - \sigma^f_r A^f(t,T) dB_t^{f^T} \\
+ dx_t^d  = &\  \big[-\kappa_dx^d_t - (\sigma^d_r)^2 A^d(t,T)\big]dt + \sigma^d_r dB_t^{d^T} \numberthis \label{eq: threeFactorModelForwardHullWhite}\\
+ dx_t^f  = & \ \big[-\kappa_fx^f_t - \rho_{Sf}\sigma^f_r\sigma(t,S_t) - \rho_{df}\sigma^d_r\sigma^f_rA^d(t,T) \big]dt + \sigma^f_r dB_t^{f^T}
+\end{align*}
+
+\subsection{Time Discretization under $\mathbb{Q}^{d^T}$}\label{subsec: discretisation3F}
+Let $\Delta=t_{j+1}-t_j$ and $\sigma_j=\sigma(t_j,S_{t_j})$. Freezing the local volatility over the step and integrating (\ref{eq: threeFactorModelForwardHullWhite}):
+\begin{align*}
+x^d_{t_{j+1}} ={}& e^{-\kappa_d\Delta}x^d_{t_j}+\sigma^d_r\,G^d_j-(\sigma^d_r)^2\Delta\,L^d_j \numberthis \label{eq: discretizationDomesticInterestRate}\\
+x^f_{t_{j+1}} ={}& e^{-\kappa_f\Delta}x^f_{t_j}+\sigma^f_r\,G^f_j-\rho_{Sf}\sigma^f_r\,\sigma_j\,\Delta\,J^{1,f}_j-\rho_{df}\sigma^d_r\sigma^f_r\,\Delta\,L^{1,df}_j \numberthis \label{eq: discretizationForeignInterestRate}\\
+f_{t_{j+1}} ={}&  f_{t_j}\exp\bigg( \sigma_j\,\Delta W_j + \sigma^d_r H^d_j - \sigma^f_r H^f_j
+ - \frac{1}{2}\Delta\big[\sigma_j^2 + 2\rho_{Sd}\sigma^d_r\sigma_jI^{1,d}_j - 2\rho_{Sf}\sigma^f_r\sigma_jI^{1,f}_j   \\
+& \qquad\qquad + (\sigma^d_r)^2 I^{2,d}_j + (\sigma^f_r)^2 I^{2,f}_j - 2\rho_{df} \sigma^d_r\sigma^f_rK^{df}_j\big]
+\bigg) \numberthis \label{eq: discretizationForward3F}
+\end{align*}
+where
+$$\Delta W_j=W^{S^T}_{t_{j+1}}-W^{S^T}_{t_{j}},\qquad G^i_j=\int_{t_j}^{t_{j+1}}e^{-\kappa_i(t_{j+1}-t) }dB_t^{i^T},\qquad H^i_j=\int_{t_j}^{t_{j+1}} A^i(t,T) dB_t^{i^T}. $$
+The simulation of the three state variables boils down to simulate the Gaussian vector
+$$\big(\Delta W_j,\,G^d_j,\,H^d_j,\,G^f_j,\,H^f_j\big)$$
+whose covariance matrix is $\Delta\,\Sigma_j^{FX}$ where
+\[\Sigma_j^{FX}= \left( \begin{array}{ccccc}
+1 & \rho_{Sd} J_j^{1,d} & \rho_{Sd} I^{1,d}_j & \rho_{Sf} J_j^{1,f} & \rho_{Sf} I^{1,f}_j \medskip\\
+\cdot & J_j^{2,d} & L_j^d & \rho_{df}J_j^{df} & \rho_{df}L^{2,df}_j \medskip\\
+\cdot & \cdot & I^{2,d}_j & \rho_{df}L^{1,df}_j & \rho_{df}K^{df}_j \medskip\\
+\cdot & \cdot & \cdot & J_j^{2,f} & L_j^f  \medskip\\
+\cdot & \cdot & \cdot & \cdot & I^{2,f}_j
+\end{array} \right)\]
+with ($i\in \{d,f\}$)
+\begin{align*}
+& J_j^{1,i} = \frac{1-e^{-\kappa_i\Delta }}{\kappa_i\Delta}, \qquad
+ J_j^{2,i} = \frac{1-e^{-2\kappa_i\Delta } }{2\kappa_i\Delta}, \qquad
+ J_j^{df} = \frac{1 - e^{-(\kappa_f +\kappa_d)\Delta}}{(\kappa_f +\kappa_d)\Delta} \bigskip\\
+& I^{1,i}_j = \frac{\kappa_i\Delta-e^{-\kappa_i T }(e^{\kappa_i t_{j+1} }-e^{\kappa_i t_{j} }) }{\kappa_i^2 \Delta} \\
+& I^{2,i}_j = \frac{\kappa_i\Delta  -2e^{-\kappa_i T }(e^{\kappa_i t_{j+1} }-e^{\kappa_i t_{j} }) +\frac{1}{2}e^{-2\kappa_i T }(e^{2\kappa_i t_{j+1} }-e^{2\kappa_i t_{j} }) }{\kappa_i^3\Delta}\\
+& L_j^i = \frac{J_j^{1,i}}{\kappa_i}-e^{-\kappa_i(T + t_{j+1}) } \frac{ e^{2\kappa_i t_{j+1} }-e^{2\kappa_i t_{j} }  }{2\kappa_i^2\Delta} \\
+& L^{1,df}_j = \frac{J_j^{1,f}}{\kappa_d}-e^{- (\kappa_d T + \kappa_f t_{j+1}) } \frac{ e^{(\kappa_f +\kappa_d) t_{j+1} }-e^{(\kappa_f +\kappa_d) t_{j} }  }{\kappa_d(\kappa_f +\kappa_d)\Delta}\\
+& L^{2,df}_j = \frac{J_j^{1,d}}{\kappa_f}-e^{- (\kappa_f T + \kappa_d t_{j+1}) } \frac{ e^{(\kappa_f +\kappa_d) t_{j+1} }-e^{(\kappa_f +\kappa_d) t_{j} }  }{\kappa_f(\kappa_f +\kappa_d)\Delta}\\
+& K^{df}_j = \frac{1}{\kappa_d\kappa_f\Delta}\bigg[\Delta - \frac{e^{-\kappa_d T}(e^{\kappa_d t_{j+1}} - e^{\kappa_d t_j} )}{\kappa_d} - \frac{e^{-\kappa_f T}(e^{\kappa_f t_{j+1}} - e^{\kappa_f t_j} )}{\kappa_f}\\
+& \qquad\qquad\qquad + \frac{e^{-(T-t_{j+1})(\kappa_f +\kappa_d)} - e^{-(T-t_{j})(\kappa_f +\kappa_d)}}{\kappa_f +\kappa_d}\bigg]
+\end{align*}
+Each coefficient is the average over the step of a product of two of the kernels $1$, $e^{-\kappa_i(t_{j+1}-t)}$, $A^i(t,T)$; for instance
+$$K^{df}_j=\frac{1}{\Delta}\int_{t_j}^{t_{j+1}}A^d(t,T)A^f(t,T)dt,\qquad L^{1,df}_j=\frac{1}{\Delta}\int_{t_j}^{t_{j+1}}A^d(t,T)e^{-\kappa_f(t_{j+1}-t)}dt.$$
+
+\subsection{Malliavin representation}\label{subsec: malliavin3F}
+Following \cite{guyonLabordere}, we give an alternative expression to the calibration condition (\ref{eq: threeFactorCalibrationCondition}), in order to achieve a more accurate and smooth estimation of the local volatility for strikes that are far from the money.
+
+\subsubsection{The general formula}
+Two elementary facts about the forward measures are needed.
+\begin{lem}[Forward measures]\label{lem: forwardMeasures}
+For every $t$, with $F_{0t}=S_0P^f_{0t}/P^d_{0t}$ the forward FX rate,
+\begin{equation}\label{eq: RNforward}
+\left.\frac{d\mathbb{Q}^{f^t}}{d\mathbb{Q}^{d^t}}\right|_{\mathcal{F}_t}=\frac{S_t}{F_{0t}} .
+\end{equation}
+Consequently, if $q^{d^t}$ and $q^{f^t}$ denote the densities of $S_t$ under the two measures,
+\begin{itemize}
+\item[(i)] $q^{f^t}(K)=\frac{K}{F_{0t}}\,q^{d^t}(K)$, and therefore $S_0P^f_{0t}\,q^{f^t}(K)=K\,P^d_{0t}\,q^{d^t}(K)=K\,\partial_K^2C(t,K)$;
+\item[(ii)] $\mathbb{E}^{f^t}[H\,|\,S_t=K]=\mathbb{E}^{d^t}[H\,|\,S_t=K]$ for every integrable $\mathcal{F}_t$-measurable $H$.
+\end{itemize}
+\end{lem}
+\begin{proof}
+In domestic currency the numeraire of $\mathbb{Q}^{f^t}$ is $S_uP^f_{ut}$ and the numeraire of $\mathbb{Q}^{d^t}$ is $P^d_{ut}$; their ratio at $u=t$ is $S_t$, and $F_{0t}$ is its value at $u=0$. Since the density (\ref{eq: RNforward}) is a function of $S_t$ only, (i) is immediate and (ii) follows from Bayes' formula.
+\end{proof}
+
+\paragraph{Convention.} Write $(W^S,B^d,B^f)^\top=\mathcal{C}Z$ with $Z$ a three-dimensional standard Brownian motion and $\mathcal{C}\mathcal{C}^\top=R$. The Malliavin derivative with respect to the rate driver $B^d$ is $\MD^{B^d}_sF:=\langle \MD^Z_sF,\mathcal{C}^\top e_d\rangle$: it is the sensitivity of $F$ to a perturbation of the path of $B^d$ which moves $W^S$ and $B^f$ by the regression coefficients $\rho_{Sd}$ and $\rho_{df}$. With this convention $\mathbb{E}[F\int_0^th(s)dB^d_s]=\mathbb{E}[\int_0^th(s)\MD^{B^d}_sF\,ds]$. The same convention is used for the drivers of the other measures.
+
+By the Clark-Ocone formula, $r^d_t-r^0_d=\int_0^t\sigma^{d^t}_r(s)\,dB^{d^t}_s$ under $\mathbb{Q}^{d^t}$ and $r^f_t-r^0_f=\int_0^t\sigma^{f^t}_r(s)\,d\widetilde{B}^{f^t}_s$ under $\mathbb{Q}^{f^t}$, where $\sigma^{d^t}_r(s)=\mathbb{E}^{d^t}[\MD^{B^{d^t}}_sr^d_t|\mathcal{F}_s]$ and $\sigma^{f^t}_r(s)=\mathbb{E}^{f^t}[\MD^{\widetilde{B}^{f^t}}_sr^f_t|\mathcal{F}_s]$. The derivation of section 11.7.6.1 in \cite{guyonLabordere}, applied to each term of (\ref{eq: threeFactorCalibrationCondition}) under its own forward measure and combined with Lemma \ref{lem: forwardMeasures} (i), gives
+\begin{align*}
+\sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 & - \frac{2}{K}\int _0^t \mathbb{E}^{d^t}\big[\sigma_r^{d^t}(s)\, \MD _s^{B^{d^t}}S_t  \big|S_t = K \big]ds \\
+& +  \frac{2}{K}\int _0^t \mathbb{E}^{f^t}\big[\sigma_r^{f^t}(s)\, \MD _s^{\widetilde{B}^{f^t}}S_t  \big|S_t = K \big]ds
+\numberthis \label{eq: threeFactorGeneralMalliavin}
+\end{align*}
+Both terms carry the factor $2/K$. In the foreign term,
+$$S_0\,\mathbb{E}^f\big[D^f_{0t}\,\delta_K(S_t)\,\cdot\,\big]=S_0P^f_{0t}\,q^{f^t}(K)\,\mathbb{E}^{f^t}\big[\,\cdot\,\big|S_t=K\big],$$
+and the density of $S_t$ under the foreign forward measure is $K\partial_K^2C/(S_0P^f_{0t})$, not $\partial^2_KC/P^f_{0t}$.
+
+For Hull-White rates the Clark-Ocone integrands are deterministic,
+\begin{equation}\label{eq: kernels}
+\sigma_r^{d^t}(s)=\sigma^d_r\,e^{-\kappa_d(t-s)},\qquad \sigma_r^{f^t}(s)=\sigma^f_r\,e^{-\kappa_f(t-s)},
+\end{equation}
+because each rate is autonomous and Gaussian under its own forward measure. What remains is to evaluate the two integrated sensitivities of $S_t$.
+
+\subsubsection{Malliavin derivative demystified}
+Before moving to the actual computation of the Malliavin derivatives in (\ref{eq: threeFactorGeneralMalliavin}) required for an explicit formulation of the Particle Algorithm in the case of three-factor FX SIR-LV model, I attempt to give a short introduction to the tools needed to understand the following derivations.
+I need to assume familiarity with the basics of Malliavin calculus. These can be found in the first chapter of \cite{nualart} and I will refer to the Nualart's book through out the computations.
+
+The results I am going to use are the \textit{commutative relation} between the Derivative and Divergence operators (Proposition 1.3.8 in \cite{nualart}) and the \textit{chain rule} for the Derivative operator (Proposition 1.2.3 in \cite{nualart}).
+
+\begin{prop}[Commutative Relation between $\MD$ and $\delta$]\ \\
+Provided that the condition of Proposition 1.3.8 in \cite{nualart} are satisfied, one has:
+
+\begin{equation}\label{eq: commumativeRelation}
+\MD_s( \delta(u) )= u_s\mathbb{I}_{s\leq t} + \int_0^t\MD_s u_r \mathbb{I}_{s\leq t}dW_r
+\end{equation}
+for a stochastic process $u$ on $L^2([0,t] \times \Omega)$.
+\end{prop}
+
+To get familiar with such tools, I am going to solve the following easy exercise (exercise 2.2.1 in\cite{nualart} ):\\
+
+\begin{exe}
+Let $\sigma$ and $b$ be continuously differentiable functions on $\mathbb{R}$ with bounded
+derivatives. Consider the solution $X = \{X_t, t \in [0, T]\}$ of the stochastic
+differential equation
+$$ X_t = x_0 + \int_0^t\sigma(X_r)dW_r + \int_0^tb(X_r)dr$$
+Show that for $s\leq t$ we have
+$$ \MD_sX_t = \sigma(X_s)\exp\bigg(\int_s^t\sigma'(X_r)dW_r  + \int_s^t[b'(X_r)-\frac{1}{2}\sigma'(X_r)^2]dr  \bigg) $$
+Where $\MD$ is the Malliavin derivative with respect to the Brownian Motion $W$.
+\end{exe}\
+\\
+\begin{sol}
+Let's first rewrite the previous SDE as:
+$$ X_t = x_0 + \delta\big(\sigma(X)\big) + <b(X),\mathbb{I}_{[0,t]}> $$
+where $\delta$ is the Skorohod integral and $<\cdot, \cdot>$ is the inner product, both under the White Noise case (Section 1.2.1 in \cite{nualart}).\\
+Then:
+\begin{align*}
+\MD_sX_t = & \MD_s\delta\big(\sigma(X)\big) + <\MD_sb(X),\mathbb{I}_{[0,t]}>\\
+= & \sigma(X_s)\mathbb{I}_{s\leq t} + \delta\big(\MD_s\sigma(X)\mathbb{I}_{s\leq t}\big) +  <\MD_sb(X),\mathbb{I}_{[0,t]}>
+\end{align*} 
+Where we get the second line from an application of the \textit{commutative relation}.
+By applying the \textit{chain rule} of the Malliavin derivative to $\sigma$ and $b$ we get:
+\begin{align*}
+\MD_sX_t =\MD_sX_t\mathbb{I}_{s\leq t}= & \sigma(X_s)\mathbb{I}_{s\leq t} + \delta\big( \sigma'(X)\cdot \MD_sX \mathbb{I}_{s\leq t}\big) + < b'(X) \cdot\MD_s X,\mathbb{I}_{[0,t]}>\\
+= & \sigma(X_s) + \int_0^t \sigma'(X_r)\cdot\MD_sX_r \mathbb{I}_{s\leq t} dW_r + \int_0^t b'(X_r) \cdot\MD_s X_r\mathbb{I}_{s\leq t} dr
+\end{align*} 
+Define now $S_t:= \MD_sX_t\mathbb{I}_{s\leq t}$, one may write
+$$ S_t = \sigma(X_s)\mathbb{I}_{s\leq t} + \int_0^t \sigma'(X_r)S_rdW_r + \int_0^t b'(X_r) S_rdr,$$
+thus
+$$ dS_t = \sigma'(X_t)S_tdW_t + b'(X_t) S_t dt$$
+which is the SDE driving a Geometric Brownian Motion with initial value equal to $\sigma(X_s)$. So the result is proven $\diamond$ .
+\end{sol}
+
+The exercise is the scalar case of a general fact used below: for a diffusion $X$, $\MD_sX_t=J_tJ_s^{-1}\times$(diffusion coefficient at $s$), where $J$ is the first variation (tangent) process of $X$. For a system, $J$ is matrix-valued.
+
+\subsubsection{Why the foreign rate cannot be treated by a change of measure}\label{subsubsec: obstacle}
+Under $\mathbb{Q}^{f}$ the foreign rate is autonomous, exactly as the domestic rate is under $\mathbb{Q}^d$, and it is tempting to compute its Malliavin derivative there and to transport the result to the domestic measure (a change-of-variable formula for the Malliavin derivative under a Girsanov shift is given in \cite{ewald}). This does not lead to a closed form, for two reasons.
+
+First, the domestic term of (\ref{eq: threeFactorGeneralMalliavin}) requires the derivative with respect to $B^{d^t}$, not with respect to the foreign driver.
+Second, and more fundamentally, by (\ref{measureChange: domesticToForeign}) the drivers of the two measures differ by $\rho_{Sf}\int_0^t\sigma(u,S_u)du$, which is a functional of the path: a perturbation of the noise moves $S$, hence the Girsanov kernel, hence $r^f$. One Brownian motion cannot be substituted for the other inside a Malliavin derivative. Indeed, differentiating the Hull-White foreign rate directly under $\mathbb{Q}^{d^T}$ gives
+$$ d\,\MD^{B^{d^T}}_sr^f_t=\Big[-\kappa_f\,\MD^{B^{d^T}}_sr^f_t-\rho_{Sf}\,\sigma^f_r\,\partial_S\sigma(t,S_t)\,\MD^{B^{d^T}}_sS_t\Big]dt, $$
+while $\MD^{B^{d^T}}_sS_t$ depends on $\MD^{B^{d^T}}_sr^f_t$ through the drift $r^d_t-r^f_t$ of the spot. The pair $(\MD_sS_t,\MD_sr^f_t)$ solves a coupled linear system with random coefficients; it has no scalar factorisation of the type $V_t/V_s$ that made the one-factor computation of Section \ref{subsec: malliavin1F} explicit. The symmetric statement holds under the foreign measure, where it is the domestic rate that carries a quanto drift $+\rho_{Sd}\sigma^d_r\sigma(t,S_t)$.
+
+The way out is not to solve for the two-parameter family $\MD_sS_t$, $0\leq s\leq t$, at all: because the kernels (\ref{eq: kernels}) factorise as $e^{-\kappa t}\cdot e^{\kappa s}$, the $s$-integral in (\ref{eq: threeFactorGeneralMalliavin}) can be carried through the linear system.
+
+\subsubsection{Integrated sensitivities}
+Let $X_t=(S_t,r^d_t,r^f_t)^\top$. Under $\mathbb{Q}^d$, $dX_t=b(t,X_t)dt+\mathcal{A}(t,X_t)dZ_t$ with
+$$ b(t,X)=\begin{pmatrix} S(r^d-r^f)\\ \kappa_d(\theta_d(t)-r^d)\\ \kappa_f(\theta_f(t)-r^f)-\rho_{Sf}\sigma^f_r\,\sigma(t,S)\end{pmatrix},\qquad
+\mathcal{A}(t,X)=\begin{pmatrix} S\sigma(t,S)&0&0\\ 0&\sigma^d_r&0\\ 0&0&\sigma^f_r\end{pmatrix}\mathcal{C}. $$
+Let $M_t=\nabla_Xb(t,X_t)$ and $G_{j,t}=\nabla_X\mathcal{A}_{\cdot j}(t,X_t)$ be the Jacobians of the drift and of the columns of $\mathcal{A}$, and define the integrated sensitivities
+\begin{equation}\label{eq: integratedSensitivities}
+Y^d_t:=\int_0^t\sigma^d_re^{-\kappa_d(t-s)}\,\MD^{B^{d^t}}_sX_t\,ds,\qquad
+Y^f_t:=\int_0^t\sigma^f_re^{-\kappa_f(t-s)}\,\MD^{\widetilde{B}^{f^t}}_sX_t\,ds .
+\end{equation}
+\begin{prop}[Integrated sensitivities]\label{prop: integratedSensitivities}
+The processes $Y^d$ and $Y^f$ solve, with $Y^d_0=Y^f_0=0$,
+\begin{align*}
+dY_t^d &=\big[(M_t-\kappa_d I)Y_t^d+a_d(t,X_t)\big]dt +\sum_{j=1}^3G_{j,t}Y_t^d\,dZ_t^j \numberthis\label{eq: matrixSystem}\\
+dY_t^f &=\big[(M_t+H_t-\kappa_f I)Y_t^f+a_f(t,X_t)\big]dt +\sum_{j=1}^3G_{j,t}Y_t^f\,dZ_t^j
+\end{align*}
+where $Z$ is the $\mathbb{Q}^d$-Brownian motion and
+$$ a_d=\sigma^d_r\begin{pmatrix}\rho_{Sd}S\sigma\\ \sigma^d_r\\ \rho_{df}\sigma^f_r\end{pmatrix},\qquad
+a_f=\sigma^f_r\begin{pmatrix}\rho_{Sf}S\sigma\\ \rho_{df}\sigma^d_r\\ \sigma^f_r\end{pmatrix},\qquad
+H_t=\partial_S\sigma(t,S_t)\begin{pmatrix}S_t\sigma(t,S_t)\\ \rho_{Sd}\sigma^d_r\\ \rho_{Sf}\sigma^f_r\end{pmatrix}\begin{pmatrix}1&0&0\end{pmatrix}. $$
+\end{prop}
+\begin{proof}
+For a deterministic $h$, $\int_0^th(s)\MD^{B}_sX_t\,ds$ is the derivative at $\varepsilon=0$ of the solution $X^\varepsilon_t$ obtained by shifting the driver $B$ by $\varepsilon\int_0^\cdot h(s)ds$ (and the correlated drivers accordingly): the Malliavin derivative in a Cameron-Martin direction is a directional derivative on the path space. Differentiating the SDE in $\varepsilon$ gives a linear SDE, the first variation equation with a source term.
+
+\textit{Domestic.} For Hull-White rates $\mathbb{Q}^d$, $\mathbb{Q}^{d^t}$ and $\mathbb{Q}^{d^T}$ differ by deterministic drifts, (\ref{measureChange: domesticForwardToDomestic}), so shifting $B^{d^t}$ is the same as shifting the $\mathbb{Q}^d$-driver: $Z\to Z+\varepsilon\int h\,\mathcal{C}^\top e_d\,ds$. With $h(s)=\sigma^d_re^{\kappa_ds}$, the derivative $\mathcal{Y}_t=\partial_\varepsilon X^\varepsilon_t$ solves $d\mathcal{Y}_t=[M_t\mathcal{Y}_t+e^{\kappa_dt}a_d]dt+\sum_jG_{j,t}\mathcal{Y}_tdZ^j_t$, since $\mathcal{A}\,\mathcal{C}^\top e_d\,\sigma^d_r=a_d$. As $Y^d_t=e^{-\kappa_dt}\mathcal{Y}_t$, the first equation follows.
+
+\textit{Foreign.} Again $\mathbb{Q}^f$ and $\mathbb{Q}^{f^t}$ differ by a deterministic drift, so the shift acts on the $\mathbb{Q}^f$-driver $\widetilde{Z}$, where by (\ref{measureChange: domesticToForeign}) $dZ_t=d\widetilde{Z}_t+\mathcal{C}^\top e_S\,\sigma(t,S_t)dt$. Under $\mathbb{Q}^f$ the drift of $X$ is $b+\sigma\,w$ with $w:=\mathcal{A}\,\mathcal{C}^\top e_S=(S\sigma,\rho_{Sd}\sigma^d_r,\rho_{Sf}\sigma^f_r)^\top$, so that the first variation equation has drift Jacobian $M_t+\nabla_X(\sigma w)$ and noise $\sum_jG_{j,t}\mathcal{Y}_td\widetilde{Z}^j_t=\sum_jG_{j,t}\mathcal{Y}_tdZ^j_t-\sigma\,\nabla_Xw\,\mathcal{Y}_tdt$. The two contributions of the Girsanov kernel combine into
+$$ \nabla_X(\sigma w)-\sigma\nabla_Xw=w\,(\nabla_X\sigma)^\top=H_t . $$
+The source term is $e^{\kappa_ft}a_f$ and $Y^f_t=e^{-\kappa_ft}\mathcal{Y}_t$.
+\end{proof}
+The matrix $H_t$ is the diffusion direction of the spot driver times the gradient of the Girsanov kernel between $\mathbb{Q}^d$ and $\mathbb{Q}^f$. It is exactly what a substitution of Brownian motions loses, and it is the reason why $Y^f$ does not satisfy the same variational system as $Y^d$. The systems (\ref{eq: matrixSystem}) have no index $s$ left, and do not depend on a terminal maturity.
+
+\subsubsection{Reduction to four scalar processes}
+Two components of (\ref{eq: matrixSystem}) are deterministic: $Y^{d,d}_t=v_d(t)$ and $Y^{f,f}_t=v_f(t)$, where
+$$ v_i(t)=(\sigma^i_r)^2\,\frac{1-e^{-2\kappa_it}}{2\kappa_i},\qquad i\in\{d,f\}, $$
+is the variance of the Hull-White state $x^i_t$ (for $Y^{f,f}$, note that the third row of $M_t+H_t$ is $(0,0,-\kappa_f)$: the quanto term cancels, as it must under $\mathbb{Q}^f$). For the remaining four, pass to logarithmic sensitivities of the spot,
+$$ \ell^d_t:=\frac{Y^{d,S}_t}{S_t},\qquad \zeta^f_t:=Y^{d,f}_t,\qquad \ell^f_t:=\frac{Y^{f,S}_t}{S_t},\qquad \zeta^d_t:=Y^{f,d}_t , $$
+and let $g(t,S)=S\,\partial_S\sigma(t,S)$. By It\^o's formula the terms $r^d-r^f$ and $\sigma\,dW^S$ of the spot cancel and (\ref{eq: matrixSystem}) becomes
+\begin{align*}
+d\ell^d_t &= \ell^d_t\Big[g(t,S_t)\big(dW^S_t-\sigma(t,S_t)dt\big)-\kappa_d\,dt\Big]
+ +\Big[v_d(t)-\zeta^f_t+\rho_{Sd}\,\sigma^d_r\,\sigma(t,S_t)\Big]dt \\
+d\zeta^f_t &= \Big[-(\kappa_d+\kappa_f)\zeta^f_t-\rho_{Sf}\,\sigma^f_r\,g(t,S_t)\,\ell^d_t
+ +\rho_{df}\,\sigma^d_r\sigma^f_r\Big]dt \numberthis \label{eq: sensitivities}\\
+d\ell^f_t &= \ell^f_t\Big[g(t,S_t)\,dW^S_t-\kappa_f\,dt\Big]
+ +\Big[\zeta^d_t-v_f(t)+\rho_{Sf}\,\sigma^f_r\,\sigma(t,S_t)\Big]dt \\
+d\zeta^d_t &= \Big[-(\kappa_d+\kappa_f)\zeta^d_t+\rho_{Sd}\,\sigma^d_r\,g(t,S_t)\,\ell^f_t
+ +\rho_{df}\,\sigma^d_r\sigma^f_r\Big]dt
+\end{align*}
+with $\ell^d_0=\zeta^f_0=\ell^f_0=\zeta^d_0=0$ and $W^S$ the $\mathbb{Q}^d$-Brownian motion; under $\mathbb{Q}^{d^T}$ substitute $dW^S_t=dW^{S^T}_t-\rho_{Sd}\sigma^d_rA^d(t,T)dt$.
+
+Two features of (\ref{eq: sensitivities}) are worth noting. The domestic pair has $g\,(dW^S-\sigma dt)$ where the foreign pair has $g\,dW^S$: this is the first component of $H_t$. The cross terms $-\rho_{Sf}\sigma^f_r\,g\,\ell^d$ and $+\rho_{Sd}\sigma^d_r\,g\,\ell^f$ are the feedback of the spot sensitivity into the rate that carries the quanto drift: this is the coupling of Section \ref{subsubsec: obstacle}. When the local volatility has no skew ($g=0$) everything is deterministic and $\zeta^f_t=\zeta^d_t$ is the covariance of $x^d_t$ and $x^f_t$.
+
+\begin{prop}[Malliavin representation, Hull-White rates]\label{prop: main}
+Let both rates follow Hull-White dynamics. The three-factor model is calibrated to the market smile if and only if
+\begin{equation}\label{eq: mainFormula}
+\boxed{\;\sigma(t,K)^2=\sigma_{Dup}(t,K)^2-2\,\mathbb{E}^{d^t}\big[\ell^d_t-\ell^f_t\,\big|\,S_t=K\big]\;}
+\end{equation}
+where $\ell^d,\ell^f$ solve (\ref{eq: sensitivities}). Equivalently, for any $T\geq t$,
+\begin{align*}
+\sigma(t,K)^2&=\sigma_{Dup}(t,K)^2
+-2\,\frac{\mathbb{E}^{\mathbb{Q}^{d^T}}\big[(P^d_{tT})^{-1}(\ell^d_t-\ell^f_t)\,\big|\,S_t=K\big]}{\mathbb{E}^{\mathbb{Q}^{d^T}}\big[(P^d_{tT})^{-1}\,\big|\,S_t=K\big]} \numberthis\label{eq: mainFormulaForward}\\
+&=\sigma_{Dup}(t,K)^2
+-2\,\frac{\mathbb{E}^{d}\big[D^d_{0t}(\ell^d_t-\ell^f_t)\,\big|\,S_t=K\big]}{\mathbb{E}^{d}\big[D^d_{0t}\,\big|\,S_t=K\big]} .
+\end{align*}
+\end{prop}
+\begin{proof}
+By (\ref{eq: kernels}) and (\ref{eq: integratedSensitivities}), the two integrals in (\ref{eq: threeFactorGeneralMalliavin}) are the conditional expectations of the first components $Y^{d,S}_t=S_t\ell^d_t$ and $Y^{f,S}_t=S_t\ell^f_t$, which equal $K\ell^d_t$ and $K\ell^f_t$ on $\{S_t=K\}$. The foreign conditional expectation is taken under $\mathbb{Q}^{f^t}$; by Lemma \ref{lem: forwardMeasures} (ii) it equals the one under $\mathbb{Q}^{d^t}$. The second line is the usual change of numeraire between $\mathbb{Q}^{d^t}$, $\mathbb{Q}^{d^T}$ and $\mathbb{Q}^d$.
+\end{proof}
+Compared with (\ref{eq: singleMeasure}), the correction no longer contains $\partial^2_KC(t,K)$ nor tail expectations, and it is a conditional expectation of quantities carried by the particles themselves.
+
+\subsection{The Particle Method with Malliavin weights}
+A particle is described by $(f^i_t,x^{d,i}_t,x^{f,i}_t)$ together with the four scalars $(\ell^{d,i}_t,\zeta^{f,i}_t,\ell^{f,i}_t,\zeta^{d,i}_t)$, all simulated under $\mathbb{Q}^{d^T}$. Using (\ref{eq: mainFormulaForward}), define
+\begin{equation}\label{eq: particleMalliavin3F}
+\sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2
+-2\,\frac{\sum_{i=1}^N\Pi^i_t\,\big(\ell^{d,i}_t-\ell^{f,i}_t\big)\,\delta_{t,N}(S^i_t-K)}
+{\sum_{i=1}^N\Pi^i_t\,\delta_{t,N}(S^i_t-K)},\qquad \Pi^i_t=\exp\big(A^d(t,T)\,x^{d,i}_t\big),
+\end{equation}
+where $\Pi^i_t$ is $(P^{d,i}_{tT})^{-1}$ up to a factor common to all particles.
+
+\subsubsection*{Time discretization of the sensitivities}
+With the notation of Section \ref{subsec: discretisation3F}, $g_j=S_{t_j}\partial_S\sigma_N(t_j,S_{t_j})$, and the increment of the $\mathbb{Q}^d$-Brownian motion $\Delta W^{\mathbb{Q}^d}_j=\Delta W_j-\rho_{Sd}\sigma^d_r\,\Delta\,I^{1,d}_j$:
+\begin{align*}
+\ell^d_{t_{j+1}}&=\ell^d_{t_j}\big[1+g_j(\Delta W^{\mathbb{Q}^d}_j-\sigma_j\Delta)-\kappa_d\Delta\big]
++\big[v_d(t_j)-\zeta^f_{t_j}+\rho_{Sd}\sigma^d_r\sigma_j\big]\Delta\\
+\zeta^f_{t_{j+1}}&=\zeta^f_{t_j}+\big[-(\kappa_d+\kappa_f)\zeta^f_{t_j}-\rho_{Sf}\sigma^f_r\,g_j\,\ell^d_{t_j}+\rho_{df}\sigma^d_r\sigma^f_r\big]\Delta \numberthis\label{eq: eulerSensitivities}\\
+\ell^f_{t_{j+1}}&=\ell^f_{t_j}\big[1+g_j\,\Delta W^{\mathbb{Q}^d}_j-\kappa_f\Delta\big]
++\big[\zeta^d_{t_j}-v_f(t_j)+\rho_{Sf}\sigma^f_r\sigma_j\big]\Delta\\
+\zeta^d_{t_{j+1}}&=\zeta^d_{t_j}+\big[-(\kappa_d+\kappa_f)\zeta^d_{t_j}+\rho_{Sd}\sigma^d_r\,g_j\,\ell^f_{t_j}+\rho_{df}\sigma^d_r\sigma^f_r\big]\Delta
+\end{align*}
+
+\subsubsection*{The Algorithm}
+Let $\{t_j\}$ be a discretization of $[0,T]$:
+\begin{itemize}
+\item[1.] Initialize $j=0$, set $\sigma_N(t,K)=\sigma_{Dup}(0,K)$ for all $t\in [t_0,t_1]$ and all sensitivities to zero
+\item[2.] Simulate the $N$ particles  $\{(f_t^i, x_t^{d,i}, x^{f,i}_t) \}_{1\leq i\leq N}$ from  $t_{j}$ to  $t_{j+1}$ using  (\ref{eq: discretizationDomesticInterestRate}), (\ref{eq: discretizationForeignInterestRate}) and (\ref{eq: discretizationForward3F})
+\item[3.] For each particle, update $(\ell^{d,i},\zeta^{f,i},\ell^{f,i},\zeta^{d,i})$ according to (\ref{eq: eulerSensitivities}), with the same Brownian increment
+\item[4.] Compute $S^i_{t_{j+1}}=f^i_{t_{j+1}}P^{d,i}_{t_{j+1}T}/P^{f,i}_{t_{j+1}T}$ and sort the particles according to the spot value. For $K\in G_{K,t_{j+1}}$ compute $\sigma_N(t_{j+1},K)^2$ from (\ref{eq: particleMalliavin3F}), floored at a small positive value (Section \ref{subsec: caveats})
+\begin{itemize}
+\item Interpolate it and extrapolate it, with an interpolation that has a continuous first derivative in $K$, as $g_j$ requires it
+\item Set $\sigma(t,K)\equiv \sigma_N(t_{j+1},K)$ for all $t\in [t_{j+1},t_{j+2}]$
+\end{itemize}
+\item[5.] Set $j:=j+1$, iterate steps 2,3 and 4 up to maturity T
+\end{itemize}
+The acceleration techniques of Section 1 apply unchanged.
+
+
+\subsection{Consistency checks}\label{subsec: checks}
+
+\paragraph{(a) No foreign rate.} If $\sigma^f_r=0$ then $\zeta^f=\zeta^d=\ell^f\equiv 0$ and the first line of (\ref{eq: sensitivities}) is (\ref{eq: oneProcess}): formula (\ref{eq: mainFormula}) is the one-factor Hull-White formula (\ref{eq: malliavinHullWhite}) of \cite{guyonLabordere}.
+
+\paragraph{(b) Constant spot volatility.} If $\sigma(t,S)\equiv\sigma$ then $g=0$, the system (\ref{eq: sensitivities}) is deterministic and can be integrated:
+$$ 2\big(\ell^d_t-\ell^f_t\big)=\partial_t\int_0^t\Big[
+(\sigma^d_r A^d)^2+(\sigma^f_r A^f)^2+2\rho_{Sd}\sigma\sigma^d_r A^d-2\rho_{Sf}\sigma\sigma^f_r A^f
+-2\rho_{df}\sigma^d_r\sigma^f_r A^dA^f\Big](s,t)\,ds . $$
+The integral is the part of the total variance of the forward $f$ that is due to the rates in the Gaussian three-factor model, so the right hand side is exactly $\sigma_{Dup}(t)^2-\sigma^2$. With zero correlations this reads
+$$ \sigma^2=\sigma_{Dup}(t)^2-\frac{(\sigma^d_r)^2}{\kappa_d^2}(1-e^{-\kappa_dt})^2-\frac{(\sigma^f_r)^2}{\kappa_f^2}(1-e^{-\kappa_ft})^2 . $$
+This fixes all signs and the normalisation $2/K$ of both terms in (\ref{eq: threeFactorGeneralMalliavin}).
+
+\paragraph{(c) Monte Carlo, with skew.} Integrating (\ref{eq: mainFormula}) twice in the strike gives two identities between unconditional expectations, which can be tested without any kernel estimate: with $c^i_T=r^i_T-r^0_i(T)$,
+\begin{align*}
+\mathrm{(I)}\quad&\mathbb{E}^d\big[D^d_{0T}\,c^d_T\,(S_T-K)^+\big]=\mathbb{E}^d\big[D^d_{0T}\,\mathbb{I}_{S_T>K}\,S_T\,\ell^d_T\big],\\
+\mathrm{(II)}\quad&\mathbb{E}^d\big[D^d_{0T}\,S_T\,c^f_T\,(S_T-K)^+\big]=\mathbb{E}^d\big[D^d_{0T}\,\mathbb{I}_{S_T>K}\,S_T^2\,\ell^f_T\big].
+\end{align*}
+They were tested for a fixed local volatility with a pronounced skew,
+$$\sigma(S)=0.12\,\big(1-0.6\tanh(2\ln S)\big),\qquad S_0=1,\qquad T=5,$$
+with $\kappa_d=5\%$, $\sigma^d_r=1.2\%$, $\kappa_f=10\%$, $\sigma^f_r=1.5\%$, correlations
+$\rho_{Sd}=0.35$, $\rho_{Sf}=-0.30$, $\rho_{df}=0.40$, flat curves at $3\%$ and
+$1\%$, $2\cdot10^6$ antithetic paths and 200 Euler steps per year. In the table, $z$ is the difference between the two sides in standard errors. The column ``naive'' uses the system (\ref{eq: sensitivities}) without the cross terms and with $g(dW^S-\sigma dt)$ in $\ell^f$, i.e. without the corrections due to the measure change.
+
+\begin{center}
+\begin{tabular}{c|rrr|rrr|rr}
+\toprule
+ & \multicolumn{3}{c|}{(I) domestic, $\times10^{-3}$} & \multicolumn{5}{c}{(II) foreign, $\times10^{-3}$}\\
+$K$ & direct & (\ref{eq: sensitivities}) & $z$ & direct & (\ref{eq: sensitivities}) & $z$ & naive & $z$\\
+\midrule
+0.70 & $2.4246$ & $2.4219$ & $+0.42$ & $-3.0956$ & $-3.0939$ & $-0.15$ & $-3.1798$ & $+6.96$\\
+0.85 & $2.1273$ & $2.1244$ & $+0.52$ & $-2.8555$ & $-2.8537$ & $-0.18$ & $-2.9303$ & $+7.19$\\
+1.00 & $1.7123$ & $1.7086$ & $+0.80$ & $-2.4536$ & $-2.4512$ & $-0.28$ & $-2.5123$ & $+6.98$\\
+1.15 & $1.2363$ & $1.2361$ & $+0.04$ & $-1.9139$ & $-1.9138$ & $0.00$ & $-1.9562$ & $+6.66$\\
+1.30 & $0.7868$ & $0.7876$ & $-0.35$ & $-1.3241$ & $-1.3245$ & $+0.08$ & $-1.3497$ & $+5.48$\\
+1.50 & $0.3491$ & $0.3497$ & $-0.46$ & $-0.6578$ & $-0.6584$ & $+0.21$ & $-0.6684$ & $+3.65$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Both identities hold within one standard error, while the naive foreign term is off by about $2.7\%$. For these parameters the cross term in the domestic pair is small (about $0.2\%$, not resolved by the test). In a stressed configuration ($T=10$, both rate volatilities doubled, skew coefficient $0.8$, 100 steps per year) both identities again hold within one standard error, the naive domestic term is off by about $1\%$ ($z$ between $3$ and $5$) and the naive foreign term by about $3\%$ ($z$ between $4$ and $8$).
+
+The simulation scheme of Section \ref{subsec: discretisation3F} was checked separately: the closed forms of all step coefficients, including $K^{df}_j$, agree with numerical quadrature to $10^{-10}$; under $\mathbb{Q}^{d^T}$ the simulated particles reproduce $\mathbb{E}[f_t]=f_0$, $P^d_{0T}\mathbb{E}[(P^d_{tT})^{-1}]=P^d_{0t}$ and $P^d_{0T}\mathbb{E}[(P^d_{tT})^{-1}S_t]=S_0P^f_{0t}$ within Monte Carlo error; and (I)--(II) hold at an intermediate date ($t=4$, $T=6$) with $\mathbb{Q}^{d^T}$ particles and weights $(P^d_{tT})^{-1}$. Pooling five independent runs of $10^6$ paths at that date (two under $\mathbb{Q}^{d^T}$, three under $\mathbb{Q}^d$), the two sides differ at $K=0.7$ by $0.13\%$ for (I) and $0.09\%$ for (II), that is $0.8$ and $0.4$ standard errors; single runs deviate by up to $2.9$ standard errors at one strike, and the right hand sides computed under the two measures agree to about $0.1\%$.
+The matrix form (\ref{eq: matrixSystem}), simulated directly, agrees with (\ref{eq: sensitivities}) path by path up to the Euler error. Scripts: \texttt{check\_sensitivities.py}, \texttt{check\_forward\_measure.py}, \texttt{check\_matrix\_form.py}.
+
+\subsection{Scope and caveats}\label{subsec: caveats}
+
+\paragraph{Calibration identity versus existence of a calibrated model.} Propositions \ref{prop: calibration} and \ref{prop: main} are statements about a model that exists: \emph{if} (\ref{eq: threeFactorModel}) has a sufficiently regular solution, then it is calibrated if and only if its local volatility satisfies (\ref{eq: mainFormula}). Substituting (\ref{eq: mainFormula}) into (\ref{eq: threeFactorModel}) gives an SDE which is nonlinear in the sense of McKean, whose coefficient depends on the law of the solution through a conditional expectation given $S_t$. Neither existence nor uniqueness of a solution of this equation follows from the identity. Even for local-stochastic volatility models with deterministic rates, existence is known only in special cases: perturbative and local in time \cite{abergelTachet}, for regime-switching volatility under a condition on the range of the volatility factor \cite{jourdainZhou}, and for stationary solutions of a time-homogeneous version \cite{lackerShkolnikovZhang}. We are not aware of an existence result for the stochastic-rates equation considered here. The particle algorithm is therefore a numerical construction; its convergence as $N\to\infty$ is not proved in this paper.
+
+\paragraph{Non-negativity of the local variance.} The right hand side of (\ref{eq: mainFormula}) need not be positive. Check (b) makes this explicit: with a flat smile, the calibrated variance is $\sigma_{Dup}(t)^2$ minus the forward variance generated by the rates, which is negative as soon as the rate volatilities and correlations imply more forward variance than the market quotes, typically at long maturities. In that case no local volatility model with the chosen rate parameters reproduces the smile; conditions under which a local volatility exists are discussed in \cite{ogetbilGanesanHientzsch}. In the algorithm, $\sigma_N(t,K)^2$ should be floored at a small positive value and the region of $(t,K)$ where the floor binds should be reported: there the model is not calibrated, and the remedy is in the inputs $(\kappa_i,\sigma^i_r,\rho)$, not in the numerics.
+
+\paragraph{Regularity.} The derivation assumes that $\sigma$ is continuously differentiable in $S$ with $S\partial_S\sigma$ bounded (first variation process), that $S_t$ has a smooth positive density, that the stochastic exponentials defining the measure changes are true martingales, and enough integrability for the Malliavin integration by parts. In the algorithm, $g_j$ is the derivative of an estimated function: noise in $\partial_S\sigma_N$ enters $\ell^d,\ell^f$ multiplicatively. The same issue is present in the one-factor method through $V_t$.
+
+\paragraph{What has and has not been tested.} The Monte Carlo evidence of Section \ref{subsec: checks} concerns the identities behind (\ref{eq: mainFormula}) for a \emph{given} smooth local volatility, and the simulation scheme. The full particle calibration of the three-factor model against a market smile, followed by the repricing of vanilla options, has not been run yet; nor has the bias due to the time step and to the kernel bandwidth been quantified.
+
+\paragraph{Hull-White.} Proposition \ref{prop: main} uses two properties of the Hull-White model: the Clark-Ocone integrands (\ref{eq: kernels}) are deterministic and factorise, and the bond volatilities are deterministic, so that risk-neutral and forward measures differ by deterministic drifts.
+
+\paragraph{Related literature.} We have not checked systematically whether the representation (\ref{eq: mainFormula}) appears in the literature cited at the beginning of this section; no claim of novelty is made at this stage.
+
+\subsection{Outlook}
+\paragraph{Gaussian multi-factor rates.} If a rate is a sum of Hull-White factors, the kernel (\ref{eq: kernels}) is a sum of exponentials and each factor contributes its own pair $(\ell,\zeta)$.
+
+\paragraph{General one-factor short rates.} For rates $dr^i_t=\mu^i(t,r^i_t)dt+\sigma^i_r(t,r^i_t)dB^i_t$ the statement that replaces the factorisation $V_t/V_s$ is $\MD_sX_t=J_tJ_s^{-1}\mathcal{A}(s,X_s)\mathcal{C}^\top e$, with $J$ the $3\times3$ first variation matrix of $X=(S,r^d,r^f)$, which is not triangular because of the quanto drift. Two further difficulties appear: the Clark-Ocone integrand is stochastic and depends on $t$, and the forward measures differ from the risk-neutral ones by state-dependent drifts, which produce additional terms of the type of $H_t$.
+
+\paragraph{Stochastic volatility.} With a stochastic volatility factor $a_t$ as in Section 1, the left hand side of (\ref{eq: mainFormula}) becomes $\sigma(t,K)^2\,\mathbb{E}^{d^t}[a_t^2|S_t=K]$ and the sensitivities acquire the tangent process of $a_t$ when $a_t$ is correlated with the rates. This is not worked out here.
+
+\appendix
+\section{Changes with respect to the 2016 draft}
+\begin{itemize}
+\item Section 1: $r^0_t$ is the forward rate $\mathbb{E}^{\mathbb{Q}^t}[r_t]$ (it was written $\mathbb{E}^{\mathbb{Q}}[r_t]$).
+\item Section 2: exponent in $\theta(t)$; definition of $B^T_t$; $\Xi_t$ is defined with $\sigma_r$; missing $+\sigma_r$ in front of the stochastic integral in (\ref{eq: discretization_forwardPrice}); initialisation of the algorithm. New Section \ref{subsec: oneProcess}.
+\item Spot SDE of the three-factor model: the diffusion term is $\sigma(t,S_t)S_tdW^S_t$.
+\item Calibration condition: unchanged, but also stated under one measure, (\ref{eq: singleMeasure}). The second system of particles under $\mathbb{Q}^{f^T}$, and with it the section on exact integration under $\mathbb{Q}^{f^T}$, are removed.
+\item Change of measure $\mathbb{Q}^d\to\mathbb{Q}^f$: the spot driver is shifted by $\sigma(t,S_t)$, not by $\rho_{Sd}\sigma(t,S_t)$.
+\item Foreign rate: centred at the market forward rate. The terms in $\mathbb{E}[\sigma(s,S_s)]$ disappear, as does a drift term that had been computed with $\kappa_d$ in place of $\kappa_f$.
+\item Discretised forward: sign of the drift, $I^{2,d}_j$ in the domestic variance term, and the coefficient $K^{df}_j$.
+\item General Malliavin formula (\ref{eq: threeFactorGeneralMalliavin}): the foreign term has the factor $2/K$ (it was $2S_0/K^2$).
+\item The lemmas on $\MD_sr^d_t$, $\MD_sr^f_t$ and $\MD_sS_t$, including the ``second approach'', are replaced by Propositions \ref{prop: integratedSensitivities} and \ref{prop: main}.
+\item Sections \ref{subsec: checks} and \ref{subsec: caveats} are new. Bibliography: duplicate entry removed, seven references added.
+\end{itemize}
+
+\begin{thebibliography}{99}
+
+\bibitem{guyonLabordere}
+  Julien Guyon, Pierre Henry-Labord\`ere,
+  \emph{Nonlinear Option Pricing},
+  Chapman \& Hall/CRC, 2013.
+
+\bibitem{deelstraRayee}
+  Griselda Deelstra, Gr\'egory Ray\'ee,
+  \emph{Local Volatility Pricing Models for Long-dated FX Derivatives},
+  Applied Mathematical Finance 20(4), 380--402, 2013.
+
+\bibitem{clark}
+  Iain J. Clark,
+  \emph{Foreign Exchange Option Pricing},
+  2011.
+
+\bibitem{nualart}
+  David Nualart,
+  \emph{The Malliavin Calculus and Related Topics},
+  2005.
+
+\bibitem{ewald}
+  Christian-Oliver Ewald,
+  \emph{A note on the Malliavin derivative operator under change of variable},
+  2009.
+
+\bibitem{hybridModel}
+  Lech Aleksander Grzelak,
+  \emph{Equity and Foreign Exchange Hybrid Models for Pricing Long-Maturity Financial Derivatives},
+  2009.
+
+\bibitem{bruti}
+  Eckhard Platen, Nicola Bruti-Liberati,
+  \emph{Numerical Solution of Stochastic Differential Equations with Jumps in Finance},
+  2010.
+
+\bibitem{ogetbilGanesanHientzsch}
+  Orcan \"Ogetbil, Narayan Ganesan, Bernhard Hientzsch,
+  \emph{Calibrating Local Volatility Models with Stochastic Drift and Diffusion},
+  International Journal of Theoretical and Applied Finance 25(2), 2022. arXiv:2009.14764.
+
+\bibitem{ogetbilHientzsch}
+  Orcan \"Ogetbil, Bernhard Hientzsch,
+  \emph{Extensions of Dupire Formula: Stochastic Interest Rates and Stochastic Local Volatility},
+  arXiv:2005.05530, 2020.
+
+\bibitem{cozma}
+  Andrei Cozma, Matthieu Mariapragassam, Christoph Reisinger,
+  \emph{Calibration of a Hybrid Local-Stochastic Volatility Stochastic Rates Model with a Control Variate Particle Method},
+  SIAM Journal on Financial Mathematics 10(1), 181--213, 2019.
+
+\bibitem{josephLoeperObloj}
+  Benjamin Joseph, Gr\'egoire Loeper, Jan Ob{\l}\'oj,
+  \emph{Calibration of Local Volatility Models with Stochastic Interest Rates using Optimal Transport},
+  Finance and Stochastics 30, 397--439, 2026.
+
+\bibitem{abergelTachet}
+  Fr\'ed\'eric Abergel, R\'emi Tachet,
+  \emph{A nonlinear partial integro-differential equation from mathematical finance},
+  Discrete and Continuous Dynamical Systems - Series A 27(3), 907--917, 2010.
+
+\bibitem{jourdainZhou}
+  Benjamin Jourdain, Alexandre Zhou,
+  \emph{Existence of a calibrated regime switching local volatility model},
+  Mathematical Finance 30(2), 501--546, 2020.
+
+\bibitem{lackerShkolnikovZhang}
+  Daniel Lacker, Mykhaylo Shkolnikov, Jiacheng Zhang,
+  \emph{Inverting the Markovian projection, with an application to local stochastic volatility models},
+  Annals of Probability 48(5), 2189--2211, 2020.
+
+\end{thebibliography}
+
+\end{document}
