@@ -51,7 +51,7 @@ Local-Stochastic Volatility  (SIR-LSV) models \\ with Particle Algorithm and ext
 \maketitle
 
 \begin{abstract}
-We derive the particle (McKean) calibration of local volatility models with stochastic interest rates, following Guyon and Henry-Labord\`ere, and extend it to long-dated FX with Hull-White domestic and foreign rates. The three-factor calibration condition is written under a single measure, so that one system of particles suffices. Its Malliavin representation is obtained without solving the coupled two-parameter system of Malliavin derivatives: integrating the derivatives against the Hull-White kernels yields four auxiliary processes per particle, simulated forward together with the state, and a correction to the Dupire local variance which involves neither $\partial_K^2C$ nor tail expectations. The representation reduces to the known one-factor formula, matches the Gaussian closed form, and its building blocks are verified by Monte Carlo. In a particle calibration to CME EUR/USD option settlements with illustrative rate parameters, the repricing error attributable to the stochastic rates is at most 0.005 volatility points over the quoted expiries, against 0.19 and 0.47 for the two parameter sets when the correction is omitted. We give a conditional local existence result for flat-smile inputs, an input-compatibility obstruction, and a separate well-posedness theorem for a regularized system; existence for general smile inputs remains open in this work.
+We derive the particle (McKean) calibration of local volatility models with stochastic interest rates, following Guyon and Henry-Labord\`ere, and extend it to long-dated FX with Hull-White domestic and foreign rates. The three-factor calibration condition is written under a single measure, so that one system of particles suffices. Its Malliavin representation is obtained without solving the coupled two-parameter system of Malliavin derivatives: integrating the derivatives against the Hull-White kernels yields four auxiliary processes per particle, simulated forward together with the state, and a correction to the Dupire local variance which involves neither $\partial_K^2C$ nor tail expectations. The representation reduces to the known one-factor formula, matches the Gaussian closed form, and its building blocks are verified by Monte Carlo. In a particle calibration to CME EUR/USD option settlements with illustrative rate parameters, the repricing error attributable to the stochastic rates is at most 0.005 volatility points over the quoted expiries, against 0.19 and 0.47 for the two parameter sets when the correction is omitted. For a prescribed volatility, the discounted density and the first moments of the auxiliary processes solve a closed system of five linear forward equations, which gives a deterministic formulation of the calibration. We give a conditional local existence result for flat-smile inputs, an input-compatibility obstruction, and a separate well-posedness theorem for a regularized system; existence for general smile inputs remains open in this work.
 \end{abstract}
 
 \tableofcontents
@@ -68,7 +68,8 @@ We derive the particle (McKean) calibration of local volatility models with stoc
 \input{sections/3c_fx_particle_algorithm}
 \input{sections/3d_fx_consistency_checks}
 \input{sections/3e_fx_existence}
-\input{sections/3f_fx_scope_and_outlook}
+\input{sections/3f_fx_moment_closure}
+\input{sections/3g_fx_scope_and_outlook}
 
 \appendix
 \input{sections/A_changes_since_2016}

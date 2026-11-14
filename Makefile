@@ -1,10 +1,13 @@
 PYTHON ?= python3
 SETTLEMENTS ?= eurusd_cme_options_2026-11-12.csv
 
-.PHONY: paper checks checks-quick calibration clean
+.PHONY: paper notes checks checks-quick calibration benchmark clean
 
 paper:
 	cd paper && pdflatex -interaction=nonstopmode SIR_LSV_particle_FX.tex >/dev/null && pdflatex -interaction=nonstopmode SIR_LSV_particle_FX.tex >/dev/null && pdflatex -interaction=nonstopmode SIR_LSV_particle_FX.tex | grep -E "Output written|Warning" || true
+
+notes:
+	cd paper/notes && for n in discounted_moment_closure_note variance_derivative_cancellation; do pdflatex -interaction=nonstopmode $$n.tex >/dev/null && pdflatex -interaction=nonstopmode $$n.tex | grep -E "Output written|Warning" || true; done
 
 # deterministic checks, then the Monte Carlo checks at a size that runs in about a minute.
 # At this size the time-step bias is visible (differences of up to about 2 standard errors);
@@ -13,6 +16,8 @@ checks-quick:
 	$(PYTHON) checks/check_covariance_stability.py
 	$(PYTHON) checks/check_gaussian_existence.py
 	$(PYTHON) checks/check_moment_closure.py --symbolic-only
+	$(PYTHON) checks/check_variance_derivative_cancellation.py
+	$(PYTHON) benchmarks/check_solver.py
 	$(PYTHON) checks/check_sensitivities.py 100000 50 5.0
 	$(PYTHON) checks/check_forward_measure.py 50 50000
 	$(PYTHON) checks/check_matrix_form.py 50
@@ -23,6 +28,8 @@ checks:
 	$(PYTHON) checks/check_covariance_stability.py
 	$(PYTHON) checks/check_gaussian_existence.py
 	$(PYTHON) checks/check_moment_closure.py
+	$(PYTHON) checks/check_variance_derivative_cancellation.py
+	$(PYTHON) benchmarks/check_solver.py
 	$(PYTHON) checks/check_sensitivities.py 1000000 200 5.0
 	$(PYTHON) checks/check_forward_measure.py 200 500000
 	$(PYTHON) checks/check_matrix_form.py 100
@@ -38,6 +45,13 @@ calibration:
 	$(PYTHON) calibration/calibrate.py stress_nocorr --rates stress --estimator none
 	$(PYTHON) calibration/summarise.py
 
+# synthetic three-method comparison (needs g++ and matplotlib); reuses files in benchmarks/work if present
+benchmark:
+	OPENBLAS_NUM_THREADS=1 $(PYTHON) -u benchmarks/compare.py reference
+	OPENBLAS_NUM_THREADS=1 $(PYTHON) -u benchmarks/compare.py calibrate
+	OPENBLAS_NUM_THREADS=1 $(PYTHON) -u benchmarks/compare.py validate
+	OPENBLAS_NUM_THREADS=1 $(PYTHON) benchmarks/compare.py report
+
 clean:
-	cd paper && rm -f *.aux *.log *.out *.toc *.synctex.gz
+	cd paper && rm -f *.aux *.log *.out *.toc *.synctex.gz notes/*.aux notes/*.log notes/*.out
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
