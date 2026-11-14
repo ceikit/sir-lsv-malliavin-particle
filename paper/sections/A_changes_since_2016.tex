@@ -1,7 +1,7 @@
 \section{Changes with respect to the 2016 draft}
 \begin{itemize}
 \item Section 1: $r^0_t$ is the forward rate $\mathbb{E}^{\mathbb{Q}^t}[r_t]$ (it was written $\mathbb{E}^{\mathbb{Q}}[r_t]$).
-\item Section 2: exponent in $\theta(t)$; definition of $B^T_t$; $\Xi_t$ is defined with $\sigma_r$; missing $+\sigma_r$ in front of the stochastic integral in (\ref{eq: discretization_forwardPrice}); initialisation of the algorithm. New Section \ref{subsec: oneProcess}.
+\item Section 2: exponent in $\theta(t)$; definition of $B^T_t$; $\Xi_t$ is defined with $\sigma_r$; sign of the rate term in the SDE of the forward $f^i_t$ and missing $+\sigma_r$ in front of the stochastic integral in (\ref{eq: discretization_forwardPrice}); initialisation and time indexing of the algorithm. New Section \ref{subsec: oneProcess}.
 \item Spot SDE of the three-factor model: the diffusion term is $\sigma(t,S_t)S_tdW^S_t$.
 \item Calibration condition: unchanged, but also stated under one measure, (\ref{eq: singleMeasure}). The second system of particles under $\mathbb{Q}^{f^T}$, and with it the section on exact integration under $\mathbb{Q}^{f^T}$, are removed.
 \item Change of measure $\mathbb{Q}^d\to\mathbb{Q}^f$: the spot driver is shifted by $\sigma(t,S_t)$, not by $\rho_{Sd}\sigma(t,S_t)$.
@@ -9,5 +9,5 @@
 \item Discretised forward: sign of the drift, $I^{2,d}_j$ in the domestic variance term, and the coefficient $K^{df}_j$.
 \item General Malliavin formula (\ref{eq: threeFactorGeneralMalliavin}): the foreign term has the factor $2/K$ (it was $2S_0/K^2$).
 \item The lemmas on $\MD_sr^d_t$, $\MD_sr^f_t$ and $\MD_sS_t$, including the ``second approach'', are replaced by Propositions \ref{prop: integratedSensitivities} and \ref{prop: main}.
-\item Sections \ref{subsec: checks} and \ref{subsec: caveats} are new. Bibliography: duplicate entry removed, seven references added.
+\item Sections \ref{subsec: checks}, \ref{subsec: existence} and \ref{subsec: caveats} are new, as are the standing hypotheses and Lemma \ref{lem: duality} in Section \ref{subsec: malliavin3F}. Bibliography: duplicate entry removed, eleven references added.
 \end{itemize}
