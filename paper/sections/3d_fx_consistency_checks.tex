@@ -1,0 +1,43 @@
+\subsection{Consistency checks}\label{subsec: checks}
+
+\paragraph{(a) No foreign rate.} If $\sigma^f_r=0$ then $\zeta^f=\zeta^d=\ell^f\equiv 0$ and the first line of (\ref{eq: sensitivities}) is (\ref{eq: oneProcess}): formula (\ref{eq: mainFormula}) is the one-factor Hull-White formula (\ref{eq: malliavinHullWhite}) of \cite{guyonLabordere}.
+
+\paragraph{(b) Constant spot volatility.} If $\sigma(t,S)\equiv\sigma$ then $g=0$, the system (\ref{eq: sensitivities}) is deterministic and can be integrated:
+$$ 2\big(\ell^d_t-\ell^f_t\big)=\partial_t\int_0^t\Big[
+(\sigma^d_r A^d)^2+(\sigma^f_r A^f)^2+2\rho_{Sd}\sigma\sigma^d_r A^d-2\rho_{Sf}\sigma\sigma^f_r A^f
+-2\rho_{df}\sigma^d_r\sigma^f_r A^dA^f\Big](s,t)\,ds . $$
+The integral is the part of the total variance of the forward $f$ that is due to the rates in the Gaussian three-factor model, so the right hand side is exactly $\sigma_{Dup}(t)^2-\sigma^2$. With zero correlations this reads
+$$ \sigma^2=\sigma_{Dup}(t)^2-\frac{(\sigma^d_r)^2}{\kappa_d^2}(1-e^{-\kappa_dt})^2-\frac{(\sigma^f_r)^2}{\kappa_f^2}(1-e^{-\kappa_ft})^2 . $$
+This fixes all signs and the normalisation $2/K$ of both terms in (\ref{eq: threeFactorGeneralMalliavin}).
+
+\paragraph{(c) Monte Carlo, with skew.} Integrating (\ref{eq: mainFormula}) twice in the strike gives two identities between unconditional expectations, which can be tested without any kernel estimate: with $c^i_T=r^i_T-r^0_i(T)$,
+\begin{align*}
+\mathrm{(I)}\quad&\mathbb{E}^d\big[D^d_{0T}\,c^d_T\,(S_T-K)^+\big]=\mathbb{E}^d\big[D^d_{0T}\,\mathbb{I}_{S_T>K}\,S_T\,\ell^d_T\big],\\
+\mathrm{(II)}\quad&\mathbb{E}^d\big[D^d_{0T}\,S_T\,c^f_T\,(S_T-K)^+\big]=\mathbb{E}^d\big[D^d_{0T}\,\mathbb{I}_{S_T>K}\,S_T^2\,\ell^f_T\big].
+\end{align*}
+They were tested for a fixed local volatility with a pronounced skew,
+$$\sigma(S)=0.12\,\big(1-0.6\tanh(2\ln S)\big),\qquad S_0=1,\qquad T=5,$$
+with $\kappa_d=5\%$, $\sigma^d_r=1.2\%$, $\kappa_f=10\%$, $\sigma^f_r=1.5\%$, correlations
+$\rho_{Sd}=0.35$, $\rho_{Sf}=-0.30$, $\rho_{df}=0.40$, flat curves at $3\%$ and
+$1\%$, $2\cdot10^6$ antithetic paths and 200 Euler steps per year. In the table, $z$ is the difference between the two sides in standard errors. The column ``naive'' uses the system (\ref{eq: sensitivities}) without the cross terms and with $g(dW^S-\sigma dt)$ in $\ell^f$, i.e. without the corrections due to the measure change.
+
+\begin{center}
+\begin{tabular}{c|rrr|rrr|rr}
+\toprule
+ & \multicolumn{3}{c|}{(I) domestic, $\times10^{-3}$} & \multicolumn{5}{c}{(II) foreign, $\times10^{-3}$}\\
+$K$ & direct & (\ref{eq: sensitivities}) & $z$ & direct & (\ref{eq: sensitivities}) & $z$ & naive & $z$\\
+\midrule
+0.70 & $2.4246$ & $2.4219$ & $+0.42$ & $-3.0956$ & $-3.0939$ & $-0.15$ & $-3.1798$ & $+6.96$\\
+0.85 & $2.1273$ & $2.1244$ & $+0.52$ & $-2.8555$ & $-2.8537$ & $-0.18$ & $-2.9303$ & $+7.19$\\
+1.00 & $1.7123$ & $1.7086$ & $+0.80$ & $-2.4536$ & $-2.4512$ & $-0.28$ & $-2.5123$ & $+6.98$\\
+1.15 & $1.2363$ & $1.2361$ & $+0.04$ & $-1.9139$ & $-1.9138$ & $0.00$ & $-1.9562$ & $+6.66$\\
+1.30 & $0.7868$ & $0.7876$ & $-0.35$ & $-1.3241$ & $-1.3245$ & $+0.08$ & $-1.3497$ & $+5.48$\\
+1.50 & $0.3491$ & $0.3497$ & $-0.46$ & $-0.6578$ & $-0.6584$ & $+0.21$ & $-0.6684$ & $+3.65$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Both identities hold within one standard error, while the naive foreign term is off by about $2.7\%$. For these parameters the cross term in the domestic pair is small (about $0.2\%$, not resolved by the test). In a stressed configuration ($T=10$, both rate volatilities doubled, skew coefficient $0.8$, 100 steps per year) both identities again hold within one standard error, the naive domestic term is off by about $1\%$ ($z$ between $3$ and $5$) and the naive foreign term by about $3\%$ ($z$ between $4$ and $8$).
+
+The simulation scheme of Section \ref{subsec: discretisation3F} was checked separately: the closed forms of all step coefficients, including $K^{df}_j$, agree with numerical quadrature to $10^{-10}$; under $\mathbb{Q}^{d^T}$ the simulated particles reproduce $\mathbb{E}[f_t]=f_0$, $P^d_{0T}\mathbb{E}[(P^d_{tT})^{-1}]=P^d_{0t}$ and $P^d_{0T}\mathbb{E}[(P^d_{tT})^{-1}S_t]=S_0P^f_{0t}$ within Monte Carlo error; and (I)--(II) hold at an intermediate date ($t=4$, $T=6$) with $\mathbb{Q}^{d^T}$ particles and weights $(P^d_{tT})^{-1}$. Pooling five independent runs of $10^6$ paths at that date (two under $\mathbb{Q}^{d^T}$, three under $\mathbb{Q}^d$), the two sides differ at $K=0.7$ by $0.13\%$ for (I) and $0.09\%$ for (II), that is $0.8$ and $0.4$ standard errors; single runs deviate by up to $2.9$ standard errors at one strike, and the right hand sides computed under the two measures agree to about $0.1\%$.
+The matrix form (\ref{eq: matrixSystem}), simulated directly, agrees with (\ref{eq: sensitivities}) path by path up to the Euler error. Scripts: \texttt{check\_sensitivities.py}, \texttt{check\_forward\_measure.py}, \texttt{check\_matrix\_form.py}.

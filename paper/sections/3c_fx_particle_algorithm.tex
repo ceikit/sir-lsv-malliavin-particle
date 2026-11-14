@@ -1,0 +1,43 @@
+\subsection{The Particle Method with Malliavin weights}
+A particle is described by $(f^i_t,x^{d,i}_t,x^{f,i}_t)$ together with the four scalars $(\ell^{d,i}_t,\zeta^{f,i}_t,\ell^{f,i}_t,\zeta^{d,i}_t)$, all simulated under $\mathbb{Q}^{d^T}$. Using (\ref{eq: mainFormulaForward}), define
+\begin{equation}\label{eq: particleMalliavin3F}
+\sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2
+-2\,\frac{\sum_{i=1}^N\Pi^i_t\,\big(\ell^{d,i}_t-\ell^{f,i}_t\big)\,\delta_{t,N}(S^i_t-K)}
+{\sum_{i=1}^N\Pi^i_t\,\delta_{t,N}(S^i_t-K)},\qquad \Pi^i_t=\exp\big(A^d(t,T)\,x^{d,i}_t\big),
+\end{equation}
+where $\Pi^i_t$ is $(P^{d,i}_{tT})^{-1}$ up to a factor common to all particles.
+
+\subsubsection*{Time discretization of the sensitivities}
+With the notation of Section \ref{subsec: discretisation3F}, $g_j=S_{t_j}\partial_S\sigma_N(t_j,S_{t_j})$, and the increment of the $\mathbb{Q}^d$-Brownian motion $\Delta W^{\mathbb{Q}^d}_j=\Delta W_j-\rho_{Sd}\sigma^d_r\,\Delta\,I^{1,d}_j$:
+\begin{align*}
+\ell^d_{t_{j+1}}&=\ell^d_{t_j}\big[1+g_j(\Delta W^{\mathbb{Q}^d}_j-\sigma_j\Delta)-\kappa_d\Delta\big]
++\big[v_d(t_j)-\zeta^f_{t_j}+\rho_{Sd}\sigma^d_r\sigma_j\big]\Delta\\
+\zeta^f_{t_{j+1}}&=\zeta^f_{t_j}+\big[-(\kappa_d+\kappa_f)\zeta^f_{t_j}-\rho_{Sf}\sigma^f_r\,g_j\,\ell^d_{t_j}+\rho_{df}\sigma^d_r\sigma^f_r\big]\Delta \numberthis\label{eq: eulerSensitivities}\\
+\ell^f_{t_{j+1}}&=\ell^f_{t_j}\big[1+g_j\,\Delta W^{\mathbb{Q}^d}_j-\kappa_f\Delta\big]
++\big[\zeta^d_{t_j}-v_f(t_j)+\rho_{Sf}\sigma^f_r\sigma_j\big]\Delta\\
+\zeta^d_{t_{j+1}}&=\zeta^d_{t_j}+\big[-(\kappa_d+\kappa_f)\zeta^d_{t_j}+\rho_{Sd}\sigma^d_r\,g_j\,\ell^f_{t_j}+\rho_{df}\sigma^d_r\sigma^f_r\big]\Delta
+\end{align*}
+
+\subsubsection*{The Algorithm}
+Let $\{t_j\}$ be a discretization of $[0,T]$:
+\begin{itemize}
+\item[1.] Initialize $j=0$, set $\sigma_N(t,K)=\sigma_{Dup}(0,K)$ for all $t\in [t_0,t_1]$ and all sensitivities to zero
+\item[2.] Simulate the $N$ particles  $\{(f_t^i, x_t^{d,i}, x^{f,i}_t) \}_{1\leq i\leq N}$ from  $t_{j}$ to  $t_{j+1}$ using  (\ref{eq: discretizationDomesticInterestRate}), (\ref{eq: discretizationForeignInterestRate}) and (\ref{eq: discretizationForward3F})
+\item[3.] For each particle, update $(\ell^{d,i},\zeta^{f,i},\ell^{f,i},\zeta^{d,i})$ according to (\ref{eq: eulerSensitivities}), with the same Brownian increment
+\item[4.] Compute $S^i_{t_{j+1}}=f^i_{t_{j+1}}P^{d,i}_{t_{j+1}T}/P^{f,i}_{t_{j+1}T}$ and sort the particles according to the spot value. For $K\in G_{K,t_{j+1}}$ compute $\sigma_N(t_{j+1},K)^2$ from (\ref{eq: particleMalliavin3F}), floored at a small positive value (Section \ref{subsec: caveats})
+\begin{itemize}
+\item Interpolate it and extrapolate it, with an interpolation that has a continuous first derivative in $K$, as $g_j$ requires it
+\item Set $\sigma(t,K)\equiv \sigma_N(t_{j+1},K)$ for all $t\in [t_{j+1},t_{j+2}]$
+\end{itemize}
+\item[5.] Set $j:=j+1$, iterate steps 2,3 and 4 up to maturity T
+\end{itemize}
+The acceleration techniques of Section 1 apply unchanged.
+\paragraph{Finite-particle interpretation.}
+The sensitivities above differentiate a diffusion with deterministic coefficient
+$\sigma$, including one determined self-consistently by a limiting law. At finite
+$N$, the estimated coefficient depends on the entire population. The auxiliary
+updates are a particle approximation to the limiting augmented system, not the
+exact Malliavin derivatives of the finite interacting system: the latter would
+also differentiate the empirical calibration function through other particles.
+Convergence of this approximation, jointly with bandwidth and time-step limits,
+is not established here.

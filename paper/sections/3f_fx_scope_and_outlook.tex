@@ -1,0 +1,35 @@
+\subsection{Scope and caveats}\label{subsec: caveats}
+
+\paragraph{Calibration identity versus existence of a calibrated model.} Propositions \ref{prop: calibration} and \ref{prop: main} are statements about a model that exists: \emph{if} (\ref{eq: threeFactorModel}) has a sufficiently regular solution, then it is calibrated if and only if its local volatility satisfies (\ref{eq: mainFormula}). Substituting (\ref{eq: mainFormula}) into (\ref{eq: threeFactorModel}) gives an SDE which is nonlinear in the sense of McKean, whose coefficient depends on the law of the solution through a conditional expectation given $S_t$. Neither existence nor uniqueness of a solution of this equation follows from the identity. The existence results above cover the stated Gaussian subclass and a regularized equation, not arbitrary unregularized smiles. Even for local-stochastic volatility models with deterministic rates, existence is known only in special cases: perturbative and local in time \cite{abergelTachet}, for regime-switching volatility under a condition on the range of the volatility factor \cite{jourdainZhou}, and for stationary solutions of a time-homogeneous version \cite{lackerShkolnikovZhang}. The more recent results of \cite{djete,mustapha} also concern different LSV structures and do not directly establish existence for the present general-smile stochastic-rates equation. The particle algorithm is therefore a numerical construction; its convergence as $N\to\infty$ is not proved in this paper.
+
+\paragraph{Non-negativity of the local variance.}
+The right hand side of (\ref{eq: mainFormula}) need not be positive.
+The explicit Gaussian sufficient condition and the general necessary
+log-contract bound in Section \ref{subsec: existence} have different scopes:
+failure of a particular Gaussian construction is not a proof of nonexistence
+among all spot-dependent models. In the numerical algorithm, report where
+and by how much the variance floor binds. Such activation may reflect
+estimation, interpolation or time-discretization error as well as incompatible
+inputs; a negative trial iterate alone does not distinguish these cases.
+
+\paragraph{Regularity.}
+The hypotheses (H1)--(H3) distinguish local flow regularity and Malliavin
+integrability from the density conditions needed for a classical strike-wise
+formula. A global bound on $S\partial_S\sigma$ and a nonsingular correlation
+matrix are not needed for smooth-payoff duality. In the algorithm, however,
+noise in the estimated derivative $\partial_S\sigma_N$ enters the auxiliary
+processes multiplicatively. Relaxing analytical assumptions does not remove
+this numerical sensitivity.
+
+\paragraph{What has and has not been tested.} The Monte Carlo evidence of Section \ref{subsec: checks} concerns the identities behind (\ref{eq: mainFormula}) for a \emph{given} smooth local volatility, and the simulation scheme. The full particle calibration of the three-factor model against a market smile, followed by the repricing of vanilla options, has not been run yet; nor has the bias due to the time step and to the kernel bandwidth been quantified.
+
+\paragraph{Hull-White.} Proposition \ref{prop: main} uses two properties of the Hull-White model: the Clark-Ocone integrands (\ref{eq: kernels}) are deterministic and factorise, and the bond volatilities are deterministic, so that risk-neutral and forward measures differ by deterministic drifts.
+
+\paragraph{Related literature.} We have not checked systematically whether the representation (\ref{eq: mainFormula}) appears in the literature cited at the beginning of this section; no claim of novelty is made at this stage.
+
+\subsection{Outlook}
+\paragraph{Gaussian multi-factor rates.} If a rate is a sum of Hull-White factors, the kernel (\ref{eq: kernels}) is a sum of exponentials and each factor contributes its own pair $(\ell,\zeta)$.
+
+\paragraph{General one-factor short rates.} For rates $dr^i_t=\mu^i(t,r^i_t)dt+\sigma^i_r(t,r^i_t)dB^i_t$ the statement that replaces the factorisation $V_t/V_s$ is $\MD_sX_t=J_tJ_s^{-1}\mathcal{A}(s,X_s)\mathcal{C}^\top e$, with $J$ the $3\times3$ first variation matrix of $X=(S,r^d,r^f)$, which is not triangular because of the quanto drift. Two further difficulties appear: the Clark-Ocone integrand is stochastic and depends on $t$, and the forward measures differ from the risk-neutral ones by state-dependent drifts, which produce additional terms of the type of $H_t$.
+
+\paragraph{Stochastic volatility.} With a stochastic volatility factor $a_t$ as in Section 1, the left hand side of (\ref{eq: mainFormula}) becomes $\sigma(t,K)^2\,\mathbb{E}^{d^t}[a_t^2|S_t=K]$ and the sensitivities acquire the tangent process of $a_t$ when $a_t$ is correlated with the rates. This is not worked out here.
