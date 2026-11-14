@@ -1,0 +1,246 @@
+\subsection{Weaker hypotheses and existence: precise scope}\label{subsec: existence}
+The representation, existence for a prescribed coefficient, and existence of a
+self-consistent calibrated coefficient are distinct assertions. The results below
+separate them. The flat-smile construction is an exact calibration benchmark:
+it permits a term structure but removes the spatial feedback through
+$g=S\partial_S\sigma$. It is not a solution of the general-smile existence
+problem. No novelty claim is made for these arguments.
+
+\paragraph{What can be relaxed in the representation.}
+Lemma \ref{lem: duality} requires neither a smooth positive strike density nor an
+invertible correlation matrix. Local spatial differentiability and the stated
+Malliavin integrability suffice; a global bound on $S\partial_S\sigma$ is not
+needed. If the weighted measures have only locally integrable densities, the
+indicator argument holds at their common Lebesgue points, so the strike identities
+hold almost everywhere where $m(t,K)>0$. Continuous positive densities promote
+these identities to all strikes. If no density is available, the smooth-payoff
+identities remain valid, but we do not assert the classical pointwise Dupire
+formula. We also do not assert the four-process equations for arbitrary
+nondifferentiable local volatility without a separate weak-flow argument.
+
+\begin{cor}[Deterministic time-dependent Gaussian rate parameters]
+The representation and calibration equivalence extend to deterministic bounded
+continuous $\kappa_i(t)\geq0$, $\sigma_i(t)\geq0$ and deterministic continuous
+positive semidefinite correlation matrices $R(t)$, provided the corresponding
+flow, integrability, density and PDE-uniqueness hypotheses hold. Write each
+own-measure rate drift as $\alpha_i(t)-\kappa_i(t)r^i$ and fit the deterministic
+$\alpha_i$ to its initial curve. In the four auxiliary equations replace all
+parameters and correlations by their time-dependent values and replace $v_i$ by
+\[
+v_i(t)=\int_0^t\sigma_i(s)^2
+          \exp\left(-2\int_s^t\kappa_i(u)du\right)ds,
+\qquad \dot v_i=-2\kappa_i(t)v_i+\sigma_i(t)^2.
+\]
+The same calibration identity then holds.
+\end{cor}
+\begin{proof}
+The own-forward Clark--Ocone kernel is
+$\sigma_i(s)\exp(-\int_s^t\kappa_i(u)du)$, which factorizes into a function
+of $s$ times a function of $t$. Use the Cameron--Martin direction
+\[
+h_i(s)=\sigma_i(s)\exp\left(\int_0^s\kappa_i(u)du\right).
+\]
+Rescale its first variation by $\exp(-\int_0^t\kappa_i(u)du)$.
+Differentiating gives the same
+matrix system with $-\kappa_i(t)Y^i$ and the time-dependent source. Correlation
+square roots depend only on time, so their spatial derivatives add no terms.
+Bond volatilities remain deterministic, and the foreign Girsanov correction
+is still $w(\nabla\sigma)^\top$. The logarithmic reduction and duality proof
+are unchanged. The rate's own component solves the displayed ODE for $v_i$.
+\end{proof}
+The covariance routines in this repository implement constant rate parameters;
+this corollary is an analytical extension, not a claim of implemented support
+for time-dependent parameters.
+
+\begin{prop}[Local existence for the unregularized flat-smile problem]
+\label{prop: gaussianExistence}
+Let the market calls be Black FX calls with deterministic forward curves and
+strike-independent total implied variance $V(t)$, where $V(0)=0$,
+$V\in C^1([0,T_*])$ and $q(t):=V'(t)>0$. Fix constant Hull--White parameters
+with $\kappa_d,\kappa_f>0$ and a valid correlation matrix. There exists $\tau>0$
+and a deterministic positive spot volatility $a(t)$ on $[0,\tau)$ giving a
+strong solution of the original, unregularized calibration equation
+(\ref{eq: mainFormula}) and reproducing these calls.
+The positive deterministic-volatility solution is unique on its maximal
+interval of strict positivity. This is uniqueness within the Gaussian subclass,
+not among all spot-dependent solutions.
+\end{prop}
+\begin{proof}
+Put $B_i(t)=(1-e^{-\kappa_it})/\kappa_i$ and
+\[
+v_i(t)=\frac{\sigma_i^2(1-e^{-2\kappa_it})}{2\kappa_i},\qquad
+z(t)=\rho_{df}\sigma_d\sigma_f
+       \frac{1-e^{-(\kappa_d+\kappa_f)t}}{\kappa_d+\kappa_f},
+\quad \sigma_i:=\sigma_r^i.
+\]
+Solve the two-dimensional nonautonomous ODE
+\begin{align*}
+\dot u_d&=-\kappa_du_d+v_d-z+\rho_{Sd}\sigma_d a,\\
+\dot u_f&=-\kappa_fu_f+z-v_f+\rho_{Sf}\sigma_f a,\\
+a(t)&=\sqrt{q(t)-2(u_d(t)-u_f(t))},\qquad u_d(0)=u_f(0)=0.
+\end{align*}
+On the open set $q(t)-2(u_d-u_f)>0$ the vector field is continuous in time
+and locally Lipschitz in $(u_d,u_f)$. Since $q(0)>0$, the Picard--Lindelof
+theorem gives a unique solution on a nonempty interval. The vector field has
+at most linear growth in $|u_d|+|u_f|$, so there is no finite-time explosion
+while inside this domain. Continuation holds on every compact time interval
+where the radicand stays uniformly positive.
+
+Set $\sigma(t,S)=a(t)$. The rate equations are linear with deterministic
+coefficients and deterministic quanto drift; the log-spot equation is then an
+explicit integral of these Gaussian rates plus a Gaussian stochastic integral.
+This constructs a unique strong state process for this coefficient.
+As $g=0$, the auxiliary system gives $\ell^d=u_d$, $\ell^f=u_f$ and
+$\zeta^f=\zeta^d=z$, all deterministic. Consequently its conditional expectation
+is $u_d-u_f$ under every forward measure and the original nonlinear identity
+holds exactly, with no kernel, variance floor, or particle approximation.
+
+To verify the market fit independently, under the domestic $t$-forward measure
+$S_t$ is lognormal with mean $F_{0t}$ and log-variance
+\begin{align*}
+V_m(t)=\int_0^t\Big[&a(s)^2+
+\sigma_d^2 A^d(s,t)^2+\sigma_f^2 A^f(s,t)^2\\
+&+2a(s)\{\rho_{Sd}\sigma_d A^d(s,t)-\rho_{Sf}\sigma_f A^f(s,t)\}\\
+&-2\rho_{df}\sigma_d\sigma_f A^d(s,t)A^f(s,t)\Big]ds.
+\end{align*}
+Differentiation, using $\partial_t A^i(s,t)=e^{-\kappa_i(t-s)}$
+and the integrating-factor solutions of the two ODEs, gives
+$V_m'(t)=a(t)^2+2(u_d-u_f)=q(t)$. Both variances vanish at zero, hence
+$V_m=V$ and the Black call prices coincide. The ODE uniqueness proves the
+asserted subclass uniqueness.
+\end{proof}
+
+\begin{cor}[Explicit global sufficient condition with zero spot--rate correlations]
+If $\rho_{Sd}=\rho_{Sf}=0$, define
+\[
+Q(t)=\sigma_d^2 B_d(t)^2+\sigma_f^2 B_f(t)^2
+       -2\rho_{df}\sigma_d\sigma_f B_d(t)B_f(t).
+\]
+Suppose $q(t)-Q(t)\geq\varepsilon>0$ throughout $[0,T_*]$.
+Then the unregularized flat-smile problem has the positive solution
+\[
+a(t)=\sqrt{q(t)-Q(t)}
+\]
+on that entire horizon.
+\end{cor}
+\begin{proof}
+The terms containing $a$ disappear from the auxiliary ODEs. Their solutions
+satisfy $2(u_d-u_f)=Q(t)$, as follows either by integrating them or by
+differentiating the deterministic rate contribution to $V_m$ above.
+The positive gap gives continuation up to $T_*$.
+\end{proof}
+The condition is sufficient for this subclass. Failure of its positive gap
+does not by itself exclude a spot-dependent calibrated solution.
+
+\begin{prop}[A necessary log-contract compatibility condition]\label{prop: logbound}
+Fix a maturity $t>0$. Suppose a calibrated solution has nonnegative spot
+volatility, a square-integrable martingale part in its forward-log dynamics
+on $[0,t]$, and finite
+expected integrated forward variance. Define the target log-contract moment
+\[
+\mathcal V(t)=-2\mathbb E^{d^t}_{\rm target}
+                 [\log(S_t/F_{0t})].
+\]
+Let $a_d(s)=\sigma_d A^d(s,t)$, $a_f(s)=\sigma_f A^f(s,t)$,
+$R_t(s)=a_d(s)^2+a_f(s)^2-2\rho_{df}a_d(s)a_f(s)$, and
+$b_t(s)=\rho_{Sd}a_d(s)-\rho_{Sf}a_f(s)$. Necessarily
+\[
+\mathcal V(t)\ \geq\ \int_0^t
+\left[R_t(s)-\min\{b_t(s),0\}^2\right]ds.
+\]
+This bound applies to spot-dependent volatility as well as to the Gaussian
+subclass, within the stated integrability class.
+\end{prop}
+\begin{proof}
+For the forward $f_s=S_sP^f_{st}/P^d_{st}$, It\^o's formula under
+$\mathbb Q^{d^t}$ and the integrability assumptions give
+\[
+-2\mathbb E^{d^t}\log(f_t/f_0)
+=\mathbb E^{d^t}\int_0^t
+   [\sigma(s,S_s)^2+2b_t(s)\sigma(s,S_s)+R_t(s)]ds.
+\]
+Since $f_t=S_t$ and $f_0=F_{0t}$, the left side equals the target moment.
+Minimize the quadratic over a nonnegative volatility: its minimum is
+$R_t(s)-\min\{b_t(s),0\}^2$. Integration gives the bound.
+\end{proof}
+For a flat smile, $\mathcal V(t)=V(t)$. In particular, with zero spot--rate
+correlations any input with $V(t)<\int_0^tR_t(s)ds$ admits no calibrated
+solution in this integrability class. An unconditional existence theorem for
+arbitrary market surfaces and fixed rate parameters is therefore false.
+
+\begin{prop}[Strong well-posedness of a specified regularized system]
+\label{prop: regularizedExistence}
+Use the domestic-measure augmented log-state
+$U=(\log S,x^d,x^f,\log D^d,\ell^d,\zeta^f,\ell^f,\zeta^d)\in\mathbb R^8$.
+Fix $h,\delta>0$ and a finite cutoff radius $L$. Choose a nonnegative kernel
+$k\in C_b^3(\mathbb R)$ and write $k_h(x)=h^{-1}k(x/h)$.
+Let $w_L(u)>0$ and $\lambda_L(u)$ be bounded $C^2$ functions with bounded
+first and second derivatives, agreeing with $e^{u_4}$ and $u_5-u_7$ on
+$[-L,L]^8$. Set
+\[
+M(t,y,\mu)=\frac{\int w_L(u)\lambda_L(u)k_h(u_1-y)\mu(du)}
+ {\delta+\int w_L(u)k_h(u_1-y)\mu(du)},\qquad
+s(t,y,\mu)=\sqrt{\chi\big(q_D(t,y)-2M(t,y,\mu)\big)}.
+\]
+Here $q_D(t,y)=\sigma_{Dup}^2(t,e^y)$ has uniformly bounded spatial
+derivatives through order two and is continuous in time; $\chi\in C_b^3$
+is a smooth variance limiter with values in a fixed interval
+$[\underline a,\overline a]\subset(0,\infty)$.
+Form the augmented SDE from the state and four auxiliary equations using
+$s$ and $g=\partial_y s$. Evaluate its state arguments at a smooth bounded
+coordinate cutoff equal to the identity on $[-L,L]^8$. Assume the
+deterministic curve coefficients are bounded and continuous in time.
+For every square-integrable initial state independent of the Brownian motion,
+this explicitly regularized McKean--Vlasov SDE has a unique strong solution
+on every finite horizon.
+\end{prop}
+\begin{proof}
+The denominator defining $M$ is at least $\delta$. Bounded kernel derivatives
+and bounded Lipschitz features imply that $M$, $\partial_yM$ and their
+spatial Lipschitz constants are uniformly bounded. For any coupling of
+$\mu,\nu$, integrating the feature differences gives bounds by a constant
+times $W_1(\mu,\nu)\leq W_2(\mu,\nu)$, also for $\partial_yM$.
+The quotient rule, positive variance floor and bounded derivatives of $\chi$
+therefore make both $s$ and $g$ globally Lipschitz in $(y,\mu)$ for the
+metric $|y-y'|+W_2(\mu,\nu)$. The cutoff bounds all remaining multiplicative
+state factors in the augmented equations. Their drift $B$ and diffusion
+$A$ consequently satisfy
+\[
+|B(t,u,\mu)-B(t,v,\nu)|+\|A(t,u,\mu)-A(t,v,\nu)\|
+\leq C(|u-v|+W_2(\mu,\nu)),
+\]
+with bounded growth. The constants may depend on $h,\delta,L$.
+
+For a deterministic continuous law flow, the frozen-law SDE has a unique
+strong solution. Couple two such solutions with the same initial state and
+Brownian motion. The usual It\^o/BDG estimate and Gronwall inequality yield
+\[
+\mathbb E\sup_{s\leq t}|U_s^\mu-U_s^\nu|^2
+\leq C_T\int_0^t W_2(\mu_s,\nu_s)^2ds.
+\]
+Thus the frozen-law map is a contraction for sufficiently short time in the
+supremum $W_2$ metric on continuous square-integrable law flows with fixed
+initial law. Its fixed point, followed by successive time intervals, gives
+strong existence on any finite horizon. For two solutions of the nonlinear
+SDE the same coupling estimate, with
+$W_2(\mathcal L(U_s),\mathcal L(V_s))^2\leq\mathbb E|U_s-V_s|^2$,
+gives pathwise uniqueness by Gronwall; the fixed-law construction also gives
+uniqueness in law.
+\end{proof}
+This theorem concerns a modified equation: kernel smoothing, denominator
+regularization, bounded features, state cutoffs and a smooth variance limiter
+are all part of its definition. It does not prove exact market calibration,
+existence for the unregularized general-smile model, or convergence as
+$h,\delta\downarrow0$ and $L\uparrow\infty$. Uniform estimates sufficient
+for that limit have not been obtained here.
+
+\paragraph{Route to the remaining general-smile problem.}
+The single-measure tail formulation (\ref{eq: singleMeasure}) offers another
+route to existence. Its denominator $K^2\partial_{KK}C/2$ is known from
+market calls, and it contains no derivative of the unknown coefficient.
+The obstacle moves to positivity, tail estimates and the discontinuous
+indicator law functional. Proving an invariant positive-variance class and
+compactness of its law map could provide a route to an unregularized existence
+theorem. This is a research route, not a completed proof. Existing conditional
+LSV existence results such as \cite{djete,mustapha} do not automatically supply
+these estimates for the present stochastic-rate and discount-weighted system.

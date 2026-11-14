@@ -6,7 +6,7 @@ The paper derives the particle (McKean) calibration of local volatility models w
 
 ## Main result
 
-For Hull-White domestic and foreign rates, the three-factor FX local volatility model is calibrated to the market smile if and only if
+Under the paper's regularity, integrability and forward-PDE uniqueness assumptions, an existing three-factor FX local volatility model with Hull-White domestic and foreign rates is calibrated to the market smile if and only if
 
 $$\sigma(t,K)^2=\sigma_{Dup}(t,K)^2-2\,\mathbb{E}^{d^t}\big[\ell^d_t-\ell^f_t\,\big|\,S_t=K\big]$$
 
@@ -16,7 +16,7 @@ where $\ell^d$ and $\ell^f$ are two of four auxiliary processes carried by each 
 
 | Path | What it is |
 |---|---|
-| `paper/SIR_LSV_particle_FX.tex` | The paper. Self-contained LaTeX source. |
+| `paper/SIR_LSV_particle_FX.tex` | The paper. Main LaTeX source; includes `existence_extensions.tex`. |
 | `checks/check_sensitivities.py` | Monte Carlo test of the two identities behind the main formula, for a local volatility with skew. |
 | `checks/check_forward_measure.py` | Test of the simulation scheme under the domestic T-forward measure and of the particle weights. |
 | `checks/check_matrix_form.py` | Shows that the matrix form and the scalar form of the auxiliary processes agree path by path. |
@@ -63,9 +63,57 @@ Not done:
 
 - Market data beyond December 2027 (the surface is extended synthetically to 5 years), and rate parameters calibrated to caps or swaptions.
 - A comparison with control-variate particle methods. The estimator comparison above is not a calibration benchmark.
-- Existence and uniqueness of the calibrated model are not addressed, and the local variance can become negative for some surfaces and rate parameters (see "Scope and caveats" in the paper).
+- General-smile existence and uniqueness remain unproved; the existence section proves a flat-smile result and a separate regularized-system theorem. The local variance can become negative for some surfaces and rate parameters (see "Scope and caveats" in the paper).
 - No claim of novelty is made. A targeted search (November 2026) did not find this representation, but the two papers that come closest have not been read in full: Benhamou, Gruz and Rivoira (2008), who use Malliavin calculus for the correction with one stochastic rate, and Bloch and Nakashima (2008), who write the FX local volatility with two stochastic rates as the deterministic-rates one plus a bias.
 
 ## Data
 
 Market data pulled with the Databento script is licensed and must not be committed here; `.gitignore` excludes the CSV it writes.
+
+## Audit and numerical hardening (14 November 2026)
+
+The timestamped review is in `reviews/2026-11-14_math_code_and_feedback_review.md`.
+The paper now states the representation hypotheses and proves calibration sufficiency
+using the model density and forward-PDE uniqueness. It also qualifies the finite-particle
+interpretation. These results remain conditional on existence of a regular model.
+
+`checks/gaussian_covariance.py` computes Gaussian step averages by positive
+Gauss-Legendre quadrature with stable `expm1` bond loadings, avoiding cancellation
+in the displayed analytical formulas. The forward-measure checker uses a QR square root of the rectangular Gram
+factor for sampling and stable bond/variance formulas, including zero mean reversion.
+The separate domestic-measure checkers retain their original fixed positive parameters.
+Run the deterministic regression check with:
+
+```
+python checks/check_covariance_stability.py
+```
+
+This checks 54 parameter/time-step cases against independent dense integration,
+Cholesky factorization, and analytical zero-kappa limits. The full particle
+calibration loop is still future work.
+
+## Existence results and weaker assumptions
+
+`paper/existence_extensions.tex` is included by the main paper. It distinguishes:
+
+- Smooth-payoff duality under local flow and Malliavin integrability assumptions,
+  allowing singular driver correlations and not requiring a strike density.
+- Local existence of an **unregularized** calibrated solution for flat-smile input,
+  with uniqueness only in the deterministic-volatility Gaussian subclass. This
+  allows a volatility term structure and supplies an exact benchmark, but removes
+  the spatial feedback that makes general-smile existence difficult.
+- An explicit global sufficient condition for that subclass with zero spot/rate correlations.
+- A necessary log-contract bound that can rule out calibration, including for
+  arbitrary spot-dependent volatility under the stated integrability conditions.
+- Strong existence and uniqueness for a specifically smoothed, clipped,
+  denominator-regularized augmented equation. This does **not** prove existence
+  or exact calibration for the original general-smile equation.
+
+An independent numerical check of the Gaussian construction requires SciPy:
+
+```
+python checks/check_gaussian_existence.py
+```
+
+The covariance regression also checks QR reconstruction, steps of 1e-8 years,
+and an analytical small conditional variance that covariance-level rounding can lose.

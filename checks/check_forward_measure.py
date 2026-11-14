@@ -2,7 +2,7 @@
 Check of the simulation scheme under the domestic T-forward measure Q^{d,T}
 (Section 3.4 of the merged paper) and of the particle weights (Section 3.6).
 
- 1. closed-form step coefficients (I, J, L, K, ...) against numerical quadrature;
+ 1. stable step coefficients (I, J, L, K, ...) against independent quadrature;
  2. exact Gaussian-vector scheme for (f, x^d, x^f) under Q^{d,T}: martingale /
     bond-price identities at an intermediate date t < T;
  3. the sensitivity identities with Q^{d,T} particles and weights 1/P^d_{tT}.
@@ -11,6 +11,7 @@ usage: python check_forward_measure.py [steps_per_year] [pairs] [seed]
 """
 import sys
 import numpy as np
+from gaussian_covariance import bond_loading, step_coefficients, step_covariance_factor
 
 kd, sd = 0.05, 0.012
 kf, sf = 0.10, 0.015
@@ -19,31 +20,15 @@ fd, ff = 0.03, 0.01
 s0, a, b = 0.12, 0.6, 2.0
 S0 = 1.0
 T, t_eval = 6.0, 4.0
-spy = int(sys.argv[1]) if len(sys.argv) > 1 else 50
+spy = 50
 
 
 def A(k, t, TT):
-    return (1 - np.exp(-k * (TT - t))) / k
+    return bond_loading(k, TT - t)
 
 
 def coeffs(t0, t1):
-    D = t1 - t0
-    c = {}
-    for nm, k in (("d", kd), ("f", kf)):
-        c["J1" + nm] = (1 - np.exp(-k * D)) / (k * D)
-        c["J2" + nm] = (1 - np.exp(-2 * k * D)) / (2 * k * D)
-        c["I1" + nm] = (k * D - np.exp(-k * T) * (np.exp(k * t1) - np.exp(k * t0))) / (k * k * D)
-        c["I2" + nm] = (k * D - 2 * np.exp(-k * T) * (np.exp(k * t1) - np.exp(k * t0))
-                        + 0.5 * np.exp(-2 * k * T) * (np.exp(2 * k * t1) - np.exp(2 * k * t0))) / (k ** 3 * D)
-        c["L" + nm] = c["J1" + nm] / k - np.exp(-k * (T + t1)) * (np.exp(2 * k * t1) - np.exp(2 * k * t0)) / (2 * k * k * D)
-    ks = kd + kf
-    c["Jdf"] = (1 - np.exp(-ks * D)) / (ks * D)
-    c["L1df"] = c["J1f"] / kd - np.exp(-(kd * T + kf * t1)) * (np.exp(ks * t1) - np.exp(ks * t0)) / (kd * ks * D)
-    c["L2df"] = c["J1d"] / kf - np.exp(-(kf * T + kd * t1)) * (np.exp(ks * t1) - np.exp(ks * t0)) / (kf * ks * D)
-    c["Kdf"] = (D - np.exp(-kd * T) * (np.exp(kd * t1) - np.exp(kd * t0)) / kd
-                - np.exp(-kf * T) * (np.exp(kf * t1) - np.exp(kf * t0)) / kf
-                + (np.exp(-ks * (T - t1)) - np.exp(-ks * (T - t0))) / ks) / (kd * kf * D)
-    return c
+    return step_coefficients(t0, t1, T, kd, kf)
 
 
 def quad_check():
@@ -71,9 +56,10 @@ def Sigma(c):
 
 
 def bond(k, s, f0, t, x):
-    c = x + s * s / (2 * k * k) * (1 - np.exp(-k * t)) ** 2
-    return np.exp(-f0 * (T - t)) * np.exp(-A(k, t, T) * c
-                                          - s * s / (4 * k ** 3) * (np.exp(-k * T) - np.exp(-k * t)) ** 2 * (np.exp(2 * k * t) - 1)), c
+    c = x + .5 * s * s * bond_loading(k, t) ** 2
+    variance = s * s * bond_loading(2 * k, t)
+    loading = A(k, t, T)
+    return np.exp(-f0 * (T-t) - loading*c - .5*loading*loading*variance), c
 
 
 def pm(x):
@@ -83,7 +69,6 @@ def pm(x):
 
 
 def run(N=400_000, seed=3):
-    seed = int(sys.argv[3]) if len(sys.argv) > 3 else seed
     rng = np.random.default_rng(seed)
     n = int(round(t_eval * spy))
     D = 1.0 / spy
@@ -91,11 +76,12 @@ def run(N=400_000, seed=3):
     f0 = S0 * np.exp(-ff * T) / np.exp(-fd * T)
     lnf = np.full(M, np.log(f0)); xd = np.zeros(M); xf = np.zeros(M)
     ld = np.zeros(M); zf = np.zeros(M); lf = np.zeros(M); zd = np.zeros(M)
-    var = lambda t, k, s: s * s * (1 - np.exp(-2 * k * t)) / (2 * k)
+    var = lambda t, k, s: s * s * bond_loading(2 * k, t)
     for j in range(n):
         t0, t1 = j * D, (j + 1) * D
         c = coeffs(t0, t1)
-        ch = np.linalg.cholesky(Sigma(c))
+        correlation = np.array([[1, rSd, rSf], [rSd, 1, rdf], [rSf, rdf, 1]])
+        ch = step_covariance_factor(t0, t1, T, kd, kf, correlation)
         Z = rng.standard_normal((N, 5)) @ ch.T
         Z = np.concatenate([Z, -Z]) * np.sqrt(D)
         dW, Gd, Hd, Gf, Hf = Z.T
@@ -144,5 +130,7 @@ def run(N=400_000, seed=3):
 
 
 if __name__ == "__main__":
+    spy = int(sys.argv[1]) if len(sys.argv) > 1 else 50
     quad_check()
-    run(N=int(sys.argv[2]) if len(sys.argv) > 2 else 400_000)
+    run(N=int(sys.argv[2]) if len(sys.argv) > 2 else 400_000,
+        seed=int(sys.argv[3]) if len(sys.argv) > 3 else 3)
