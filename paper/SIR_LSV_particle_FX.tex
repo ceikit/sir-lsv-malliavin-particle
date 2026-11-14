@@ -51,7 +51,7 @@ Local-Stochastic Volatility  (SIR-LSV) models \\ with Particle Algorithm and ext
 \maketitle
 
 \begin{abstract}
-We derive the particle (McKean) calibration of local volatility models with stochastic interest rates, following Guyon and Henry-Labord\`ere, and extend it to long-dated FX with Hull-White domestic and foreign rates. The three-factor calibration condition is written under a single measure, so that one system of particles suffices. Its Malliavin representation is obtained without solving the coupled two-parameter system of Malliavin derivatives: integrating the derivatives against the Hull-White kernels yields four auxiliary processes per particle, simulated forward together with the state, and a correction to the Dupire local variance which involves neither $\partial_K^2C$ nor tail expectations. The representation reduces to the known one-factor formula, matches the Gaussian closed form, and its building blocks are verified by Monte Carlo. A full calibration to a market smile has not yet been run, and existence of the calibrated model is not addressed.
+We derive the particle (McKean) calibration of local volatility models with stochastic interest rates, following Guyon and Henry-Labord\`ere, and extend it to long-dated FX with Hull-White domestic and foreign rates. The three-factor calibration condition is written under a single measure, so that one system of particles suffices. Its Malliavin representation is obtained without solving the coupled two-parameter system of Malliavin derivatives: integrating the derivatives against the Hull-White kernels yields four auxiliary processes per particle, simulated forward together with the state, and a correction to the Dupire local variance which involves neither $\partial_K^2C$ nor tail expectations. The representation reduces to the known one-factor formula, matches the Gaussian closed form, and its building blocks are verified by Monte Carlo. A full calibration to a market smile has not yet been run. We give a conditional local existence result for flat-smile inputs, an input-compatibility obstruction, and a separate well-posedness theorem for a regularized system; existence for general smile inputs remains open in this work.
 \end{abstract}
 
 \tableofcontents
@@ -197,7 +197,7 @@ The local volatility (\ref{eq: localVolatility_forward}) can be now rewritten as
 
 \subsection{The Particle Method - Hull White }
 In the particle algorithm for the hybrid Hull-White/Dupire model, a particle can then be described by $(f_t, r_t- r^0_t )$. Simulate the $T$-forward price $f_t = S_t/P_{tT}$ under the final forward measure as follows:
-$$ df_t^i=  f_t^i\sigma_N(t,f_t^iP_{tT}^i)dW_t^i-f_t^i\sigma_r A(t,T)dB_t^i $$
+$$ df_t^i=  f_t^i\sigma_N(t,f_t^iP_{tT}^i)dW_t^i+f_t^i\sigma_r A(t,T)dB_t^i $$
 where $B^i$ and $W^i$ are $\mathbb{Q}^T$-Brownian motions.\\
 Using the representation (\ref{eq: localVolatility_forward_HullWhite}) for the local volatility, we define:
 
@@ -374,7 +374,12 @@ From \cite{deelstraRayee}, the Dupire volatility is of the form:
 where $r_i^0 = r_i^0(t)= \mathbb{E}^{i^t} [r^i_t] = -\partial_t\ln P^{i}_{0t}$ is the market instantaneous forward rate, $\mathbb{E}^{i^t}$ being the expectation under the $t$-forward domestic and foreign measures for $i = d, i=f$ respectively.
 
 \begin{prop}[Calibration of 3-Factor SIR-LVm to market smiles]\label{prop: calibration}\ \\
-The model (\ref{eq: threeFactorModel}) is exactly calibrated to the market smile if and only if
+Assume the model exists with a $C^{1,2}$ call surface and sufficient
+integrability for the discounted Tanaka formula below. Assume a smooth market
+surface with positive strike density, matching initial and boundary conditions,
+and uniqueness for the linear forward equation with the model's fixed local
+variance coefficient. Under these hypotheses the model
+(\ref{eq: threeFactorModel}) is exactly calibrated to the market smile if and only if
 \begin{align*}
 \sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 & - \frac{ \mathbb{E}^d[ D_{0t}^d(r_t^d-r^0_d)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) }\\
  &+ S_0\frac{ \mathbb{E}^f[ D_{0t}^f(r_t^f-r^0_f)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K^2\partial^2_KC(t,K) }\numberthis \label{eq: threeFactorCalibrationCondition}
@@ -435,7 +440,12 @@ So the model is calibrated to the market smile if and only if
 & - (r_d^0 - r_f^0) K \partial_K C(t,K) - r_f^0 C(t,K)  \\
 & + \frac{1}{2}K^2\sigma(t,K)^2\partial_K^2C(t,K)
 \end{align*}
-The result follows easily from the definition of $\sigma_{Dup}(t,K)$ in (\ref{eq: threeFactorDupireVolatility}).
+The result follows easily from the definition of $\sigma_{Dup}(t,K)$ in (\ref{eq: threeFactorDupireVolatility}). For sufficiency, fix the law of the existing
+model and hence its rate-tail forcing term. The asserted identity makes the
+market surface solve the same inhomogeneous linear forward equation as $C_m$,
+with coefficient $\sigma^2$ and this same forcing. Their difference solves the
+homogeneous equation with zero initial and boundary data; the assumed
+uniqueness gives $C_m=C$.
 \end{proof}
 
 \begin{rem}
@@ -525,6 +535,18 @@ with ($i\in \{d,f\}$)
 & K^{df}_j = \frac{1}{\kappa_d\kappa_f\Delta}\bigg[\Delta - \frac{e^{-\kappa_d T}(e^{\kappa_d t_{j+1}} - e^{\kappa_d t_j} )}{\kappa_d} - \frac{e^{-\kappa_f T}(e^{\kappa_f t_{j+1}} - e^{\kappa_f t_j} )}{\kappa_f}\\
 & \qquad\qquad\qquad + \frac{e^{-(T-t_{j+1})(\kappa_f +\kappa_d)} - e^{-(T-t_{j})(\kappa_f +\kappa_d)}}{\kappa_f +\kappa_d}\bigg]
 \end{align*}
+The displayed closed forms identify the exact covariance, but direct
+floating-point subtraction can be unstable for small mean reversion or small
+steps. The accompanying implementation evaluates these averages by positive
+Gauss--Legendre quadrature (at least 16 nodes), using
+$A^i(u,T)=-\operatorname{expm1}(-\kappa_i(T-u))/\kappa_i$ and its continuous
+limit $T-u$ at zero mean reversion. This numerical quadrature is not an additional
+model time discretization; its accuracy is checked against independent dense trapezoidal
+quadrature. It avoids cancellation in composite expressions. For sampling, QR factorization of the rectangular weighted kernel factor
+is used directly, avoiding a Cholesky factorization of its rounded Gram matrix.
+Extremely small steps can still require higher precision to resolve differences
+below floating-point accuracy.
+
 Each coefficient is the average over the step of a product of two of the kernels $1$, $e^{-\kappa_i(t_{j+1}-t)}$, $A^i(t,T)$; for instance
 $$K^{df}_j=\frac{1}{\Delta}\int_{t_j}^{t_{j+1}}A^d(t,T)A^f(t,T)dt,\qquad L^{1,df}_j=\frac{1}{\Delta}\int_{t_j}^{t_{j+1}}A^d(t,T)e^{-\kappa_f(t_{j+1}-t)}dt.$$
 
@@ -550,7 +572,7 @@ In domestic currency the numeraire of $\mathbb{Q}^{f^t}$ is $S_uP^f_{ut}$ and th
 
 \paragraph{Convention.} Write $(W^S,B^d,B^f)^\top=\mathcal{C}Z$ with $Z$ a three-dimensional standard Brownian motion and $\mathcal{C}\mathcal{C}^\top=R$. The Malliavin derivative with respect to the rate driver $B^d$ is $\MD^{B^d}_sF:=\langle \MD^Z_sF,\mathcal{C}^\top e_d\rangle$: it is the sensitivity of $F$ to a perturbation of the path of $B^d$ which moves $W^S$ and $B^f$ by the regression coefficients $\rho_{Sd}$ and $\rho_{df}$. With this convention $\mathbb{E}[F\int_0^th(s)dB^d_s]=\mathbb{E}[\int_0^th(s)\MD^{B^d}_sF\,ds]$. The same convention is used for the drivers of the other measures.
 
-By the Clark-Ocone formula, $r^d_t-r^0_d=\int_0^t\sigma^{d^t}_r(s)\,dB^{d^t}_s$ under $\mathbb{Q}^{d^t}$ and $r^f_t-r^0_f=\int_0^t\sigma^{f^t}_r(s)\,d\widetilde{B}^{f^t}_s$ under $\mathbb{Q}^{f^t}$, where $\sigma^{d^t}_r(s)=\mathbb{E}^{d^t}[\MD^{B^{d^t}}_sr^d_t|\mathcal{F}_s]$ and $\sigma^{f^t}_r(s)=\mathbb{E}^{f^t}[\MD^{\widetilde{B}^{f^t}}_sr^f_t|\mathcal{F}_s]$. The derivation of section 11.7.6.1 in \cite{guyonLabordere}, applied to each term of (\ref{eq: threeFactorCalibrationCondition}) under its own forward measure and combined with Lemma \ref{lem: forwardMeasures} (i), gives
+For this single-driver representation assume each rate is autonomous under its own forward measure and measurable with respect to its own rate-driver filtration; otherwise a full vector Clark--Ocone representation is required. By the Clark-Ocone formula, $r^d_t-r^0_d=\int_0^t\sigma^{d^t}_r(s)\,dB^{d^t}_s$ under $\mathbb{Q}^{d^t}$ and $r^f_t-r^0_f=\int_0^t\sigma^{f^t}_r(s)\,d\widetilde{B}^{f^t}_s$ under $\mathbb{Q}^{f^t}$, where $\sigma^{d^t}_r(s)=\mathbb{E}^{d^t}[\MD^{B^{d^t}}_sr^d_t|\mathcal{F}_s]$ and $\sigma^{f^t}_r(s)=\mathbb{E}^{f^t}[\MD^{\widetilde{B}^{f^t}}_sr^f_t|\mathcal{F}_s]$. The derivation of section 11.7.6.1 in \cite{guyonLabordere}, applied to each term of (\ref{eq: threeFactorCalibrationCondition}) under its own forward measure and combined with Lemma \ref{lem: forwardMeasures} (i), gives
 \begin{align*}
 \sigma(t,K)^2 = \sigma_{Dup}(t,K)^2 & - \frac{2}{K}\int _0^t \mathbb{E}^{d^t}\big[\sigma_r^{d^t}(s)\, \MD _s^{B^{d^t}}S_t  \big|S_t = K \big]ds \\
 & +  \frac{2}{K}\int _0^t \mathbb{E}^{f^t}\big[\sigma_r^{f^t}(s)\, \MD _s^{\widetilde{B}^{f^t}}S_t  \big|S_t = K \big]ds
@@ -636,8 +658,40 @@ Let $M_t=\nabla_Xb(t,X_t)$ and $G_{j,t}=\nabla_X\mathcal{A}_{\cdot j}(t,X_t)$ be
 Y^d_t:=\int_0^t\sigma^d_re^{-\kappa_d(t-s)}\,\MD^{B^{d^t}}_sX_t\,ds,\qquad
 Y^f_t:=\int_0^t\sigma^f_re^{-\kappa_f(t-s)}\,\MD^{\widetilde{B}^{f^t}}_sX_t\,ds .
 \end{equation}
+\paragraph{Standing hypotheses for the Hull--White representation.}\label{hyp: representation}
+Fix a finite horizon $T_*>0$, deterministic initial states as in
+(\ref{eq: centredStates}), and a positive semidefinite correlation matrix $R$.
+Choose any square root $\mathcal C\mathcal C^\top=R$; its inverse is not used.
+The rate parameters are constant with $\kappa_i>0$. Assume:
+\begin{itemize}
+\item[(H1)] The coefficient $\sigma(t,S)$ is deterministic, continuous in $t$
+and locally continuously differentiable in $S>0$. The state has a nonexplosive
+strong solution with $S_t>0$. Its Cameron--Martin first variations exist under
+the domestic and foreign risk-neutral measures and solve the differentiated
+state equations. No global bound on $S\partial_S\sigma$ is imposed.
+\item[(H2)] All numeraire-change stochastic exponentials are true martingales
+on $[0,T_*]$. For each $t>0$, $S_t$ belongs to $\mathbb D^{1,2}$ under both
+own $t$-forward measures. Its Malliavin derivative is square integrable on
+$[0,t]\times\Omega$ under those measures, so integration against the bounded
+Hull--White kernels and Malliavin duality are legitimate. The integrated
+first variations and the drift and diffusion terms of their equations are
+locally integrable to the orders needed for stochastic Fubini. In particular,
+$\mathbb E^{d^t}|S_t\ell^d_t|+
+\mathbb E^{f^t}|S_t\ell^f_t|<\infty$.
+\item[(H3)] For the classical calibration statement, the discounted Tanaka
+martingale is a true martingale and the rate-tail expectations are finite.
+The model call surface is $C^{1,2}$ for $t>0,K>0$, and
+$m(t,K)=\partial_{KK}C_m(t,K)>0$. The locally finite signed weighted measures
+$\mathbb E^d[D^d_{0t}\ell^i_t\mathbf1_{S_t\in dK}]$ have continuous densities
+$n_i(t,K)$. Conditional expectations at a strike use the continuous versions
+$n_i(t,K)/m(t,K)$. These assumptions justify the indicator limit below.
+\end{itemize}
+The first two hypotheses suffice for the integrated system and smooth-payoff
+duality. Hypothesis (H3) is needed only for the pointwise classical calibration
+formula. Local differentiability alone is not asserted to imply (H2) or (H3).
+
 \begin{prop}[Integrated sensitivities]\label{prop: integratedSensitivities}
-The processes $Y^d$ and $Y^f$ solve, with $Y^d_0=Y^f_0=0$,
+Under the standing hypotheses, the processes $Y^d$ and $Y^f$ solve, with $Y^d_0=Y^f_0=0$,
 \begin{align*}
 dY_t^d &=\big[(M_t-\kappa_d I)Y_t^d+a_d(t,X_t)\big]dt +\sum_{j=1}^3G_{j,t}Y_t^d\,dZ_t^j \numberthis\label{eq: matrixSystem}\\
 dY_t^f &=\big[(M_t+H_t-\kappa_f I)Y_t^f+a_f(t,X_t)\big]dt +\sum_{j=1}^3G_{j,t}Y_t^f\,dZ_t^j
@@ -678,8 +732,38 @@ with $\ell^d_0=\zeta^f_0=\ell^f_0=\zeta^d_0=0$ and $W^S$ the $\mathbb{Q}^d$-Brow
 
 Two features of (\ref{eq: sensitivities}) are worth noting. The domestic pair has $g\,(dW^S-\sigma dt)$ where the foreign pair has $g\,dW^S$: this is the first component of $H_t$. The cross terms $-\rho_{Sf}\sigma^f_r\,g\,\ell^d$ and $+\rho_{Sd}\sigma^d_r\,g\,\ell^f$ are the feedback of the spot sensitivity into the rate that carries the quanto drift: this is the coupling of Section \ref{subsubsec: obstacle}. When the local volatility has no skew ($g=0$) everything is deterministic and $\zeta^f_t=\zeta^d_t$ is the covariance of $x^d_t$ and $x^f_t$.
 
+\begin{lem}[Smooth-payoff duality]\label{lem: duality}
+Under (H1)--(H2), for each bounded $C^1$ function $\psi$ with bounded derivative,
+\begin{align*}
+\mathbb E^d[D^d_{0t}c^d_t\psi(S_t)]
+ &=\mathbb E^d[D^d_{0t}S_t\ell^d_t\psi'(S_t)],\\
+\mathbb E^d[D^d_{0t}S_tc^f_t\psi(S_t)]
+ &=\mathbb E^d[D^d_{0t}S_t^2\ell^f_t\psi'(S_t)],
+\qquad c^i_t=r^i_t-r_i^0(t).
+\end{align*}
+No strike density or strict positive definiteness of $R$ is required here.
+\end{lem}
+\begin{proof}
+Under the domestic $t$-forward measure,
+$c_t^d=\int_0^t\sigma_r^d e^{-\kappa_d(t-s)}dB_s^{d^t}$.
+The chain rule and duality against this deterministic square-integrable kernel
+show that $\mathbb E^{d^t}[c_t^d\psi(S_t)]
+=\mathbb E^{d^t}[S_t\ell_t^d\psi'(S_t)]$.
+Multiplication by $P^d_{0t}$ gives the first identity. Repeat the argument
+under the foreign $t$-forward measure and multiply by $S_0P^f_{0t}$.
+The identity $S_0\mathbb E^f[D^f_{0t}H]=\mathbb E^d[D^d_{0t}S_tH]$
+then gives the second identity. All changes of measure are applied to the
+already-defined path functional $\ell^f$, not to an untransformed Malliavin operator.
+\end{proof}
+
 \begin{prop}[Malliavin representation, Hull-White rates]\label{prop: main}
-Let both rates follow Hull-White dynamics. The three-factor model is calibrated to the market smile if and only if
+Let both rates follow Hull-White dynamics and impose (H1)--(H3).
+Let the market call surface $C$ have positive strike density and a positive
+Dupire variance, with $C(0,K)=(S_0-K)^+$, $C(t,0)=S_0P^f_{0t}$ and
+$C(t,K)\to0$ as $K\to\infty$. Assume uniqueness for its linear forward Dupire
+PDE in a solution class containing both $C$ and the model call surface $C_m$,
+with these initial and boundary conditions. Then the existing three-factor
+model is calibrated to $C$ if and only if
 \begin{equation}\label{eq: mainFormula}
 \boxed{\;\sigma(t,K)^2=\sigma_{Dup}(t,K)^2-2\,\mathbb{E}^{d^t}\big[\ell^d_t-\ell^f_t\,\big|\,S_t=K\big]\;}
 \end{equation}
@@ -693,6 +777,35 @@ where $\ell^d,\ell^f$ solve (\ref{eq: sensitivities}). Equivalently, for any $T\
 \end{prop}
 \begin{proof}
 By (\ref{eq: kernels}) and (\ref{eq: integratedSensitivities}), the two integrals in (\ref{eq: threeFactorGeneralMalliavin}) are the conditional expectations of the first components $Y^{d,S}_t=S_t\ell^d_t$ and $Y^{f,S}_t=S_t\ell^f_t$, which equal $K\ell^d_t$ and $K\ell^f_t$ on $\{S_t=K\}$. The foreign conditional expectation is taken under $\mathbb{Q}^{f^t}$; by Lemma \ref{lem: forwardMeasures} (ii) it equals the one under $\mathbb{Q}^{d^t}$. The second line is the usual change of numeraire between $\mathbb{Q}^{d^t}$, $\mathbb{Q}^{d^T}$ and $\mathbb{Q}^d$.
+For completeness, the calibration equivalence can be established without
+identifying the model density with the market density in advance. Write
+$m(t,K)=\mathbb E^d[D^d_{0t}\delta(S_t-K)]=\partial_{KK}C_m(t,K)$ and
+$c^i_t=r^i_t-r_i^0(t)$. Apply Lemma \ref{lem: duality} to smooth approximations of
+$\mathbf1_{(K,\infty)}$. Dominated convergence handles the left sides;
+the continuous weighted densities in (H3) handle the approximate identities
+on the right sides. This gives
+\begin{align*}
+\mathbb E^d[D^d_{0t}c^d_t\mathbb I_{S_t>K}]
+ &=K m(t,K)\mathbb E^{d^t}[\ell^d_t\mid S_t=K],\\
+\mathbb E^d[D^d_{0t}S_tc^f_t\mathbb I_{S_t>K}]
+ &=K^2m(t,K)\mathbb E^{d^t}[\ell^f_t\mid S_t=K].
+\end{align*}
+Here the first identity uses the domestic forward measure; the second uses
+foreign duality followed by Lemma \ref{lem: forwardMeasures}. It\^o--Tanaka
+therefore yields, for the model surface,
+\[
+\partial_t C_m=-(r_d^0-r_f^0)K\partial_K C_m-r_f^0C_m
++\tfrac12K^2\left(\sigma^2(t,K)+2\mathbb E^{d^t}
+[\ell^d_t-\ell^f_t\mid S_t=K]\right)\partial_{KK}C_m.
+\]
+If $C_m=C$, division by the positive market density proves necessity.
+Conversely, substituting (\ref{eq: mainFormula}) makes this precisely the
+market forward Dupire PDE. The initial conditions coincide. At $K=0$,
+$C_m(t,0)=\mathbb E^d[D^d_{0t}S_t]=S_0P^f_{0t}$ by the true-martingale
+numeraire change, and $C_m(t,K)\to0$ as $K\to\infty$ by integrability of
+$D^d_{0t}S_t$. The assumed uniqueness therefore implies $C_m=C$. This argument proves neither existence
+nor uniqueness of the nonlinear calibrated SDE.
+
 \end{proof}
 Compared with (\ref{eq: singleMeasure}), the correction no longer contains $\partial^2_KC(t,K)$ nor tail expectations, and it is a conditional expectation of quantities carried by the particles themselves.
 
@@ -730,6 +843,16 @@ Let $\{t_j\}$ be a discretization of $[0,T]$:
 \item[5.] Set $j:=j+1$, iterate steps 2,3 and 4 up to maturity T
 \end{itemize}
 The acceleration techniques of Section 1 apply unchanged.
+\paragraph{Finite-particle interpretation.}
+The sensitivities above differentiate a diffusion with deterministic coefficient
+$\sigma$, including one determined self-consistently by a limiting law. At finite
+$N$, the estimated coefficient depends on the entire population. The auxiliary
+updates are a particle approximation to the limiting augmented system, not the
+exact Malliavin derivatives of the finite interacting system: the latter would
+also differentiate the empirical calibration function through other particles.
+Convergence of this approximation, jointly with bandwidth and time-step limits,
+is not established here.
+
 
 
 \subsection{Consistency checks}\label{subsec: checks}
@@ -776,13 +899,30 @@ $K$ & direct & (\ref{eq: sensitivities}) & $z$ & direct & (\ref{eq: sensitivitie
 The simulation scheme of Section \ref{subsec: discretisation3F} was checked separately: the closed forms of all step coefficients, including $K^{df}_j$, agree with numerical quadrature to $10^{-10}$; under $\mathbb{Q}^{d^T}$ the simulated particles reproduce $\mathbb{E}[f_t]=f_0$, $P^d_{0T}\mathbb{E}[(P^d_{tT})^{-1}]=P^d_{0t}$ and $P^d_{0T}\mathbb{E}[(P^d_{tT})^{-1}S_t]=S_0P^f_{0t}$ within Monte Carlo error; and (I)--(II) hold at an intermediate date ($t=4$, $T=6$) with $\mathbb{Q}^{d^T}$ particles and weights $(P^d_{tT})^{-1}$. Pooling five independent runs of $10^6$ paths at that date (two under $\mathbb{Q}^{d^T}$, three under $\mathbb{Q}^d$), the two sides differ at $K=0.7$ by $0.13\%$ for (I) and $0.09\%$ for (II), that is $0.8$ and $0.4$ standard errors; single runs deviate by up to $2.9$ standard errors at one strike, and the right hand sides computed under the two measures agree to about $0.1\%$.
 The matrix form (\ref{eq: matrixSystem}), simulated directly, agrees with (\ref{eq: sensitivities}) path by path up to the Euler error. Scripts: \texttt{check\_sensitivities.py}, \texttt{check\_forward\_measure.py}, \texttt{check\_matrix\_form.py}.
 
+\input{existence_extensions.tex}
+
 \subsection{Scope and caveats}\label{subsec: caveats}
 
-\paragraph{Calibration identity versus existence of a calibrated model.} Propositions \ref{prop: calibration} and \ref{prop: main} are statements about a model that exists: \emph{if} (\ref{eq: threeFactorModel}) has a sufficiently regular solution, then it is calibrated if and only if its local volatility satisfies (\ref{eq: mainFormula}). Substituting (\ref{eq: mainFormula}) into (\ref{eq: threeFactorModel}) gives an SDE which is nonlinear in the sense of McKean, whose coefficient depends on the law of the solution through a conditional expectation given $S_t$. Neither existence nor uniqueness of a solution of this equation follows from the identity. Even for local-stochastic volatility models with deterministic rates, existence is known only in special cases: perturbative and local in time \cite{abergelTachet}, for regime-switching volatility under a condition on the range of the volatility factor \cite{jourdainZhou}, and for stationary solutions of a time-homogeneous version \cite{lackerShkolnikovZhang}. We are not aware of an existence result for the stochastic-rates equation considered here. The particle algorithm is therefore a numerical construction; its convergence as $N\to\infty$ is not proved in this paper.
+\paragraph{Calibration identity versus existence of a calibrated model.} Propositions \ref{prop: calibration} and \ref{prop: main} are statements about a model that exists: \emph{if} (\ref{eq: threeFactorModel}) has a sufficiently regular solution, then it is calibrated if and only if its local volatility satisfies (\ref{eq: mainFormula}). Substituting (\ref{eq: mainFormula}) into (\ref{eq: threeFactorModel}) gives an SDE which is nonlinear in the sense of McKean, whose coefficient depends on the law of the solution through a conditional expectation given $S_t$. Neither existence nor uniqueness of a solution of this equation follows from the identity. The existence results above cover the stated Gaussian subclass and a regularized equation, not arbitrary unregularized smiles. Even for local-stochastic volatility models with deterministic rates, existence is known only in special cases: perturbative and local in time \cite{abergelTachet}, for regime-switching volatility under a condition on the range of the volatility factor \cite{jourdainZhou}, and for stationary solutions of a time-homogeneous version \cite{lackerShkolnikovZhang}. The more recent results of \cite{djete,mustapha} also concern different LSV structures and do not directly establish existence for the present general-smile stochastic-rates equation. The particle algorithm is therefore a numerical construction; its convergence as $N\to\infty$ is not proved in this paper.
 
-\paragraph{Non-negativity of the local variance.} The right hand side of (\ref{eq: mainFormula}) need not be positive. Check (b) makes this explicit: with a flat smile, the calibrated variance is $\sigma_{Dup}(t)^2$ minus the forward variance generated by the rates, which is negative as soon as the rate volatilities and correlations imply more forward variance than the market quotes, typically at long maturities. In that case no local volatility model with the chosen rate parameters reproduces the smile; conditions under which a local volatility exists are discussed in \cite{ogetbilGanesanHientzsch}. In the algorithm, $\sigma_N(t,K)^2$ should be floored at a small positive value and the region of $(t,K)$ where the floor binds should be reported: there the model is not calibrated, and the remedy is in the inputs $(\kappa_i,\sigma^i_r,\rho)$, not in the numerics.
+\paragraph{Non-negativity of the local variance.}
+The right hand side of (\ref{eq: mainFormula}) need not be positive.
+The explicit Gaussian sufficient condition and the general necessary
+log-contract bound in Section \ref{subsec: existence} have different scopes:
+failure of a particular Gaussian construction is not a proof of nonexistence
+among all spot-dependent models. In the numerical algorithm, report where
+and by how much the variance floor binds. Such activation may reflect
+estimation, interpolation or time-discretization error as well as incompatible
+inputs; a negative trial iterate alone does not distinguish these cases.
 
-\paragraph{Regularity.} The derivation assumes that $\sigma$ is continuously differentiable in $S$ with $S\partial_S\sigma$ bounded (first variation process), that $S_t$ has a smooth positive density, that the stochastic exponentials defining the measure changes are true martingales, and enough integrability for the Malliavin integration by parts. In the algorithm, $g_j$ is the derivative of an estimated function: noise in $\partial_S\sigma_N$ enters $\ell^d,\ell^f$ multiplicatively. The same issue is present in the one-factor method through $V_t$.
+\paragraph{Regularity.}
+The hypotheses (H1)--(H3) distinguish local flow regularity and Malliavin
+integrability from the density conditions needed for a classical strike-wise
+formula. A global bound on $S\partial_S\sigma$ and a nonsingular correlation
+matrix are not needed for smooth-payoff duality. In the algorithm, however,
+noise in the estimated derivative $\partial_S\sigma_N$ enters the auxiliary
+processes multiplicatively. Relaxing analytical assumptions does not remove
+this numerical sensitivity.
 
 \paragraph{What has and has not been tested.} The Monte Carlo evidence of Section \ref{subsec: checks} concerns the identities behind (\ref{eq: mainFormula}) for a \emph{given} smooth local volatility, and the simulation scheme. The full particle calibration of the three-factor model against a market smile, followed by the repricing of vanilla options, has not been run yet; nor has the bias due to the time step and to the kernel bandwidth been quantified.
 
@@ -884,6 +1024,14 @@ The matrix form (\ref{eq: matrixSystem}), simulated directly, agrees with (\ref{
   \emph{Inverting the Markovian projection, with an application to local stochastic volatility models},
   Annals of Probability 48(5), 2189--2211, 2020.
 
+\bibitem{djete}
+Mao Fabrice Djete,
+\emph{Non-regular McKean--Vlasov equations and calibration problem in local
+stochastic volatility models}, arXiv:2208.09986v2, 2024.
+\bibitem{mustapha}
+Scander Mustapha,
+\emph{Strong existence and uniqueness of a calibrated local stochastic
+volatility model}, arXiv:2406.14074, 2024.
 \end{thebibliography}
 
 \end{document}
