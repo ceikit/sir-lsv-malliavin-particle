@@ -1,0 +1,174 @@
+\section{Background: one stochastic rate}\label{sec: oneRate}
+One of the great features of the particle method is that it easily extends to
+the case where interest rates are also stochastic. An LSVM with stochastic
+interest rates (SIR-LSVM) is defined in a risk-neutral measure  $ \mathbb{Q}  $ by:
+
+\begin{equation}  \label{eq:spot} dS_t=r_tS_t dt + \sigma(t,S_t)a_t S_tdW_t 
+\end{equation}
+
+where the short term rate $r_t$ and the stochastic volatility $a_t$ are Ito processes.
+\subsection{The Calibration Condition}
+In this case the calibration condition reads:
+
+\begin{equation} \label{eq:calibration_condition_spot} \sigma(t,K)^2 \frac{\mathbb{E}^{\mathbb{Q}}[ D_{0t}a_t^2 | S_t = K ]}{ \mathbb{E}^{\mathbb{Q}}[ D_{0t} | S_t = K ] } = \sigma_{Dup}(t,K) ^2 - \frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) },
+\end{equation}
+
+where the discount factor $ D_{0t}$ is given by $ D_{0t}=exp\bigg(-\int_0^t r_sds\bigg)$ and
+
+$r_t^0 = \mathbb{E}^{\mathbb{Q}^t} [r_t] = -\partial_t\log P_{0t}$, with $ P_{st} $ the time-$s$ value of the bond of maturity $t$.\\
+
+From the calibration condition (\ref{eq:calibration_condition_spot}), the dynamics of the calibrated SIR-LSVM read as the following nonlinear McKean diffusion: 
+
+$$ dS_t=r_tS_t dt + \sigma(t,S_t,\mathbb{Q}_t)a_t S_tdW_t .$$
+
+Alternatively, it reads as the following nonlinear McKean diffusion for the
+forward $f_t = S_t/P_{tT}$ in the forward measure $\mathbb{Q}^T$ , where $T$ denotes the last maturity date for which we want to calibrate the market smile:
+
+\begin{equation}\label{eq: forwardPrice}
+\frac{df_t}{f_t}= \sigma(t,P_{tT}f_t,\mathbb{Q}_t^T)a_t dW_t^T -\sigma_P^T(t)dB^T_t
+\end{equation} 
+
+where 
+
+\begin{equation}\label{eq: localVolatility_forward}
+\sigma(t,K,\mathbb{Q}_t^T)^2=\bigg( \sigma_{Dup}(t,K)^2-P_{0T} \frac{ \mathbb{E}^{\mathbb{Q}^T}[ P_{tT}^{-1}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } \bigg)\cdot  \frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1} | S_t = K ]}{ \mathbb{E}^{\mathbb{Q}^T}[ P_{tT}^{-1}a_t^2 | S_t = K ] }
+\end{equation}
+
+$ \sigma_P^T(t) $ is the volatility of the bond $ P_{tT}$, and $B^T_t$ the (possibly multi-dimensional) $\mathbb{Q}^T$-Brownian motion that drives the interest rate curve.
+
+\subsection{The Particle Method}
+A \textit{particle} is then described by the vector-valued process $(f_t^i,a^i_t,r_t^i)$, for $1\leq i \leq N$, where $N$ is the number of simulated particles.
+Using the representation (\ref{eq: localVolatility_forward}) for the local volatility, we then define:
+
+\begin{equation}\label{eq: discrete_localVol_general}
+\sigma_N(t,K)^2= \bigg( \sigma_{Dup}(t,K)^2 - P_{0T}\frac{\frac{1}{N}\sum_{i=1}^N (P_{tT}^{i})^{-1}(r_t^i-r_t^0)\mathbb{I}_{S_t^i>K} }{\frac{1}{2}K\partial^2_KC(t,K)}\bigg)\cdot\frac{\sum_{i=1}^N (P_{tT}^{i})^{-1} \delta_{t,N}(S_t^i-K)}{\sum_{i=1}^N (P_{tT}^{i})^{-1} (a_t^i)^2\delta_{t,N}(S_t^i-K)}
+\end{equation}
+
+and simulate:
+\begin{equation}\label{eq: discrete_forwardPrice}
+df_t^i = f_t^i\sigma_N(t,f_t^i P_{tT}^i)a_t^idW_t^i-f_t^i\sigma_P^{T,i}(t)dB_t^i
+\end{equation}
+
+\subsection{Acceleration Techniques}\label{subsec: acceleration}
+\begin{itemize}
+\item Not necessary to compute the sum in (\ref{eq: discrete_localVol_general}) for all $i$
+\item Save time: compute $\sigma_N$ for a grid $G_{K,t}$ of values of $K$ with size $N_{K,t}<N$
+\item Then inter- and extra-polate (cubic splines)
+\end{itemize}
+
+\smallskip
+\begin{itemize}
+\item Moreover: a large number of terms in the sum in (\ref{eq: discrete_localVol_general}) is negligible
+\item Disregard $f_t^i$. when it is far from $K$, i.e., $\delta_{t,N}(S_t^i-K) < \eta$ ($\eta$ being a threshold)
+\item This requires sorting the particles according to the spot value
+\item The cost $O(N\ln N)$ is compensated by the acceleration with the grid
+\end{itemize}
+
+\subsection{Malliavin representation of the local volatility}\label{subsec: malliavinGeneral}
+Thanks to an application of the Clark-Ocone's formula we can give another expression of the contribution of stochastic interest rates to local volatility:
+\begin{equation}\label{eq: malliavinRepresentation}
+\frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } = \frac{2}{K}\int _0^t \mathbb{E}^{\mathbb{Q}^t}[\sigma_r^t(s)\cdot \MD _s^{B^t}S_t  |S_t = K ]ds
+\end{equation}
+
+where $ \MD_s^{B^t} $ is the Malliavin derivative with respect to the Brownian motion $B^t$.
+This brings few different benefits:
+\begin{itemize}
+\item[1.] instead of an unconditional expectation we get a conditional expectation given $ S_t = K $ (easier for MC);
+\item[2.] the term $\partial_K^2C$ cancels out: fortunate case as it is sensitive to the strike interpolation/extrapolation method;
+\item[3.] both $\mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]$ and $K\partial_K^2C$ are very small for strikes $K$ that are far from the money. Hence we get rid of a problematic $0/0$ ratio.
+\end{itemize}
+By specifying a particular model for the interest rate and computing the Malliavin derivative in (\ref{eq: malliavinRepresentation}), one gets more explicit formulas for the interest rate contribution to the local volatility.
+We shall see this applied to case of the Hull-White model.
+
+\subsection{The hybrid Hull-White/Dupire model}\label{subsec: hwDupire}
+Assume now that $a_t \equiv 1$. We consider the particular case where $r_t$ follows the Hull-White model:
+
+\begin{equation}\label{eq: hull_white}
+dr_t = \kappa\big(\theta(t)-r_t\big)dt+\sigma_r dB_t
+\end{equation}
+with $B$ is $\mathbb{Q}$-Brownian motion, correlated with $W$, the correlation being $\rho$.
+
+The function $ \theta(t)$ is chosen such that the zero coupon curve observed at $t = 0$ is matched:
+$$\theta(t) = \frac{1}{\kappa}\frac{\partial f^{mkt}}{\partial t}(0,t)+f^{mkt}(0,t)+\frac{\sigma_r^2}{2\kappa^2}(1-e^{-2\kappa t})  $$
+where
+$$f^{mkt}(0,t)=-\frac{\partial\ln P_{0t}^{mkt}}{\partial t} = r_t^0$$
+
+The bond prices are given by:
+\begin{equation}\label{eq: bondPrice_hullWhite}
+P_{tT}= \frac{P_{0T}^{mkt}}{P_{0t}^{mkt}}\exp\bigg( -A(t,T)(r_t-r_t^0)-\frac{\sigma_r^2}{4\kappa^3}(e^{-\kappa T}-e^{-\kappa t})^2(e^{2\kappa t}-1)     \bigg)
+\end{equation}
+where
+$$A(t,T)= \frac{1-e^{ -\kappa(T-t) }}{\kappa}$$
+and the volatility of the zero-coupon bond is 
+$$\sigma_P^T(t)=-\sigma_r A(t,T)$$\\
+
+In view of simulating all processes under the terminal forward measure $\mathbb{Q}^T$ ,
+we aim at writing $r_t -r_t^0$ in terms of the $\mathbb{Q}^T$-Brownian motion
+$$ B^T_t=B_t-\int_0^t\sigma_P^T(s)ds=B_t+\sigma_r\int_0^tA(s,T)ds $$
+
+After computations the explicit solution to (\ref{eq: hull_white}) under the $\mathbb{Q}^T$-measure is:
+\begin{equation}\label{eq: hullWhiteSolution}
+r_t -r_t^0= e^{-\kappa t}\bigg(\sigma_r\int_0^t e^{\kappa s}dB_s^T-\frac{\sigma_r^2}{\kappa^2}\sinh(\kappa t)\big(1-e^{-\kappa(T-t)} \big)   \bigg)
+\end{equation}
+
+\subsubsection{Malliavin representation under Hull-White}\label{subsec: malliavin1F}
+Under these assumptions, (\ref{eq: malliavinRepresentation}) reads:
+
+\begin{equation}\label{eq: malliavinHullWhite}
+\frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } = 
+2\sigma_re^{-\kappa t}\mathbb{E}^{\mathbb{Q}^t}[ V_t(\rho U_t + \Theta_t\Xi_t-\Lambda_t)|S_t = K]
+\end{equation}
+
+where:
+\begin{align*}
+  \frac{dV_t}{V_t} &= S_t\partial_S\sigma(t,S_t)\{dW_t^T + [\rho\sigma_P^T(t,r_t)- \sigma(t,S_t) ]dt\} ,\ \ V_0=1\\
+  U_t &= \int_0^te^{\kappa s}\frac{\sigma(s,S_s)}{V_s}ds\\ \numberthis \label{eq: malliavinWeights}
+  \Theta_t &= \int_0^t\frac{e^{-\kappa s}}{V_s}ds \\  
+  \Lambda_t &= \int_0^t\sigma_re^{2\kappa s}\Theta_s ds\\
+  \Xi_t &= \sigma_r\frac{e^{2\kappa t}-1}{2\kappa}
+\end{align*}
+
+The computation of (\ref{eq: malliavinHullWhite}) for all $t$, requires the simulation of only 3 processes
+$f_t$, $r_t$, $V_t$, and 3 integrals $U_t$, $\Theta_t$, $\Lambda_t$.
+The local volatility (\ref{eq: localVolatility_forward}) can be now rewritten as:
+
+\begin{align*}
+\sigma(t,K,\mathbb{Q}_t^T)^2=  \sigma_{Dup}(t,K)^2 &-2\sigma_r\rho e^{-\kappa t}\frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}V_tU_t|S_t=K]}{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}|S_t=K]} \\ 
+ &  -2\sigma_r e^{-\kappa t}\frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}V_t(\Theta_t\Xi_t-\Lambda_t)|S_t=K]}{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}|S_t=K]} \numberthis \label{eq: localVolatility_forward_HullWhite}
+\end{align*}
+
+\subsubsection{The particle method}
+In the particle algorithm for the hybrid Hull-White/Dupire model, a particle can then be described by $(f_t, r_t- r^0_t )$. Simulate the $T$-forward price $f_t = S_t/P_{tT}$ under the final forward measure as follows:
+$$ df_t^i=  f_t^i\sigma_N(t,f_t^iP_{tT}^i)dW_t^i+f_t^i\sigma_r A(t,T)dB_t^i $$
+where $B^i$ and $W^i$ are $\mathbb{Q}^T$-Brownian motions.\\
+Using the representation (\ref{eq: localVolatility_forward_HullWhite}) for the local volatility, we define:
+
+\begin{align*}
+\sigma_N(t,K)^2 = \sigma_{Dup}(t,K)^2 & -2\sigma_r\rho e^{-\kappa t}\frac{\sum_{i=1}^N \Pi_t^{i} V_t^iU_t^i \delta_{t,N}(S_t^i-K) }{\sum_{i=1}^N \Pi_t^{i} \delta_{t,N}(S_t^i-K)} \\
+&  -2\sigma_r e^{-\kappa t}\frac{\sum_{i=1}^N \Pi_t^{i}V_t^i(\Theta^i_t\Xi^i_t-\Lambda^i_t)\delta_{t,N}(S_t^i-K) }{\sum_{i=1}^N \Pi_t^{i} \delta_{t,N}(S_t^i-K)} \numberthis \label{eq: discrete_localVolatility_forward_HullWhite}
+\end{align*}
+
+with:
+
+$$ \Pi_t^{i} = \exp\bigg( A(t,T)(r_t^i-r_t^0)+\frac{\sigma_r^2}{4\kappa^3}(e^{-\kappa T}-e^{-\kappa t})^2(e^{2\kappa t}-1)     \bigg) $$
+
+The time discretisation of these processes and the resulting algorithm are given in Appendix \ref{app: oneRate}.
+
+\subsection{An equivalent one-process form}\label{subsec: oneProcess}
+The five objects $V_t,U_t,\Theta_t,\Lambda_t,\Xi_t$ can be replaced by a single process. Define
+$$ \ell_t := \sigma_r e^{-\kappa t}\,V_t\big(\rho U_t+\Theta_t\Xi_t-\Lambda_t\big). $$
+Since $\rho U_t+\Theta_t\Xi_t-\Lambda_t$ has finite variation, with
+$d(\rho U_t+\Theta_t\Xi_t-\Lambda_t)=V_t^{-1}\big(\rho e^{\kappa t}\sigma(t,S_t)+e^{-\kappa t}\Xi_t\big)dt$,
+It\^o's formula gives
+\begin{equation}\label{eq: oneProcess}
+d\ell_t=\ell_t\Big[g(t,S_t)\big(dW_t-\sigma(t,S_t)dt\big)-\kappa\,dt\Big]
++\Big[v(t)+\rho\,\sigma_r\,\sigma(t,S_t)\Big]dt,\qquad \ell_0=0,
+\end{equation}
+where
+$$ g(t,S)=S\,\partial_S\sigma(t,S),\qquad v(t)=\sigma_r^2\,\frac{1-e^{-2\kappa t}}{2\kappa}, $$
+and $W$ is the $\mathbb{Q}$-Brownian motion, $dW_t=dW^T_t+\rho\,\sigma_P^T(t)dt$. Note that $v(t)$ is the variance of the Hull-White state at time $t$.
+The right hand side of (\ref{eq: malliavinHullWhite}) is then $2\,\mathbb{E}^{\mathbb{Q}^t}[\ell_t\,|\,S_t=K]$ and (\ref{eq: discrete_localVolatility_forward_HullWhite}) becomes
+\begin{equation}\label{eq: oneProcessParticle}
+\sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2-2\,\frac{\sum_{i=1}^N\Pi^i_t\,\ell^i_t\,\delta_{t,N}(S^i_t-K)}{\sum_{i=1}^N\Pi^i_t\,\delta_{t,N}(S^i_t-K)} .
+\end{equation}
+One Euler step of (\ref{eq: oneProcess}) per particle replaces the simulation of $V_t$ and the three quadratures of the previous section. This is the form that extends to the three-factor model of Section \ref{sec: threeFactor}: there, $\ell_t$ is the logarithmic sensitivity of the spot to a perturbation of the rate driver along the Hull-White kernel.

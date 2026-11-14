@@ -1,4 +1,4 @@
-\subsection{The Particle Method with Malliavin weights}
+\section{The Particle Method with Malliavin weights}\label{sec: algorithm3F}
 A particle is described by $(f^i_t,x^{d,i}_t,x^{f,i}_t)$ together with the four scalars $(\ell^{d,i}_t,\zeta^{f,i}_t,\ell^{f,i}_t,\zeta^{d,i}_t)$, all simulated under $\mathbb{Q}^{d^T}$. Using (\ref{eq: mainFormulaForward}), define
 \begin{equation}\label{eq: particleMalliavin3F}
 \sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2
@@ -7,7 +7,7 @@ A particle is described by $(f^i_t,x^{d,i}_t,x^{f,i}_t)$ together with the four 
 \end{equation}
 where $\Pi^i_t$ is $(P^{d,i}_{tT})^{-1}$ up to a factor common to all particles.
 
-\subsubsection*{Time discretization of the sensitivities}
+\subsection{Time discretization of the sensitivities}
 With the notation of Section \ref{subsec: discretisation3F}, $g_j=S_{t_j}\partial_S\sigma_N(t_j,S_{t_j})$, and the increment of the $\mathbb{Q}^d$-Brownian motion $\Delta W^{\mathbb{Q}^d}_j=\Delta W_j-\rho_{Sd}\sigma^d_r\,\Delta\,I^{1,d}_j$:
 \begin{align*}
 \ell^d_{t_{j+1}}&=\ell^d_{t_j}\big[1+g_j(\Delta W^{\mathbb{Q}^d}_j-\sigma_j\Delta)-\kappa_d\Delta\big]
@@ -18,7 +18,7 @@ With the notation of Section \ref{subsec: discretisation3F}, $g_j=S_{t_j}\partia
 \zeta^d_{t_{j+1}}&=\zeta^d_{t_j}+\big[-(\kappa_d+\kappa_f)\zeta^d_{t_j}+\rho_{Sd}\sigma^d_r\,g_j\,\ell^f_{t_j}+\rho_{df}\sigma^d_r\sigma^f_r\big]\Delta
 \end{align*}
 
-\subsubsection*{The Algorithm}
+\subsection{The Algorithm}
 Let $\{t_j\}$ be a discretization of $[0,T]$:
 \begin{itemize}
 \item[1.] Initialize $j=0$, set $\sigma_N(t,K)=\sigma_{Dup}(0,K)$ for all $t\in [t_0,t_1]$ and all sensitivities to zero
@@ -31,7 +31,7 @@ Let $\{t_j\}$ be a discretization of $[0,T]$:
 \end{itemize}
 \item[5.] Set $j:=j+1$, iterate steps 2,3 and 4 up to maturity T
 \end{itemize}
-The acceleration techniques of Section 1 apply unchanged.
+The acceleration techniques of Section \ref{subsec: acceleration} apply unchanged.
 \paragraph{Finite-particle interpretation.}
 The sensitivities above differentiate a diffusion with deterministic coefficient
 $\sigma$, including one determined self-consistently by a limiting law. At finite

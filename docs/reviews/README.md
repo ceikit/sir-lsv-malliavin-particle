@@ -14,11 +14,11 @@ Two notes written on 14 November 2026 by a second agent (Codex), which audited t
 | Data script ignores `update_action` | Open |
 | The data are options on futures, the paper's calibration input is options on spot | Open. The calibration test treats them as options on the forward to their expiry; see `calibration/RESULTS.md` |
 
-The existence section of the paper (`paper/sections/3e_fx_existence.tex`) comes from the second note.
+The existence section of the paper (`paper/sections/8a_existence.tex`) comes from the second note.
 
 ## Moment-closure section
 
-`2026-11-14_discounted_moment_closure_results.md` is the second agent's write-up of the section "Exact closure of discounted first moments" (`paper/sections/3f_fx_moment_closure.tex`; standalone version in `paper/notes/`). Paths in it refer to that agent's working tree. `2026-11-14_moment_closure_validation.json` is the output of `checks/check_moment_closure.py` with its default settings.
+`2026-11-14_discounted_moment_closure_results.md` is the second agent's write-up of the section "Exact closure of discounted first moments" (`paper/sections/8b_moment_closure.tex`; standalone version in `paper/notes/`). Paths in it refer to that agent's working tree. `2026-11-14_moment_closure_validation.json` is the output of `checks/check_moment_closure.py` with its default settings.
 
 Review (14 November 2026):
 

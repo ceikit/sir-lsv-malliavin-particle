@@ -1,80 +1,8 @@
-\section{One Factor hybrid Hull-White/Dupire model}
-Assume now that $a_t \equiv 1$. We consider the particular case where $r_t$ follows the Hull-White model:
-
-\begin{equation}\label{eq: hull_white}
-dr_t = \kappa\big(\theta(t)-r_t\big)dt+\sigma_r dB_t
-\end{equation}
-with $B$ is $\mathbb{Q}$-Brownian motion, correlated with $W$, the correlation being $\rho$.
-
-The function $ \theta(t)$ is chosen such that the zero coupon curve observed at $t = 0$ is matched:
-$$\theta(t) = \frac{1}{\kappa}\frac{\partial f^{mkt}}{\partial t}(0,t)+f^{mkt}(0,t)+\frac{\sigma_r^2}{2\kappa^2}(1-e^{-2\kappa t})  $$
-where
-$$f^{mkt}(0,t)=-\frac{\partial\ln P_{0t}^{mkt}}{\partial t} = r_t^0$$
-
-The bond prices are given by:
-\begin{equation}\label{eq: bondPrice_hullWhite}
-P_{tT}= \frac{P_{0T}^{mkt}}{P_{0t}^{mkt}}\exp\bigg( -A(t,T)(r_t-r_t^0)-\frac{\sigma_r^2}{4\kappa^3}(e^{-\kappa T}-e^{-\kappa t})^2(e^{2\kappa t}-1)     \bigg)
-\end{equation}
-where
-$$A(t,T)= \frac{1-e^{ -\kappa(T-t) }}{\kappa}$$
-and the volatility of the zero-coupon bond is 
-$$\sigma_P^T(t)=-\sigma_r A(t,T)$$\\
-
-In view of simulating all processes under the terminal forward measure $\mathbb{Q}^T$ ,
-we aim at writing $r_t -r_t^0$ in terms of the $\mathbb{Q}^T$-Brownian motion
-$$ B^T_t=B_t-\int_0^t\sigma_P^T(s)ds=B_t+\sigma_r\int_0^tA(s,T)ds $$
-
-After computations the explicit solution to (\ref{eq: hull_white}) under the $\mathbb{Q}^T$-measure is:
-\begin{equation}\label{eq: hullWhiteSolution}
-r_t -r_t^0= e^{-\kappa t}\bigg(\sigma_r\int_0^t e^{\kappa s}dB_s^T-\frac{\sigma_r^2}{\kappa^2}\sinh(\kappa t)\big(1-e^{-\kappa(T-t)} \big)   \bigg)
-\end{equation}
-
-\subsection{Malliavin representation under Hull-White}\label{subsec: malliavin1F}
-Under these assumptions, (\ref{eq: malliavinRepresentation}) reads:
-
-\begin{equation}\label{eq: malliavinHullWhite}
-\frac{ \mathbb{E}^{\mathbb{Q}}[ D_{0t}(r_t-r^0_t)\mathbb{I}_{S_t>K} ]}{ \frac{1}{2}K\partial^2_KC(t,K) } = 
-2\sigma_re^{-\kappa t}\mathbb{E}^{\mathbb{Q}^t}[ V_t(\rho U_t + \Theta_t\Xi_t-\Lambda_t)|S_t = K]
-\end{equation}
-
-where:
-\begin{align*}
-  \frac{dV_t}{V_t} &= S_t\partial_S\sigma(t,S_t)\{dW_t^T + [\rho\sigma_P^T(t,r_t)- \sigma(t,S_t) ]dt\} ,\ \ V_0=1\\
-  U_t &= \int_0^te^{\kappa s}\frac{\sigma(s,S_s)}{V_s}ds\\ \numberthis \label{eq: malliavinWeights}
-  \Theta_t &= \int_0^t\frac{e^{-\kappa s}}{V_s}ds \\  
-  \Lambda_t &= \int_0^t\sigma_re^{2\kappa s}\Theta_s ds\\
-  \Xi_t &= \sigma_r\frac{e^{2\kappa t}-1}{2\kappa}
-\end{align*}
-
-The computation of (\ref{eq: malliavinHullWhite}) for all $t$, requires the simulation of only 3 processes
-$f_t$, $r_t$, $V_t$, and 3 integrals $U_t$, $\Theta_t$, $\Lambda_t$.
-The local volatility (\ref{eq: localVolatility_forward}) can be now rewritten as:
-
-\begin{align*}
-\sigma(t,K,\mathbb{Q}_t^T)^2=  \sigma_{Dup}(t,K)^2 &-2\sigma_r\rho e^{-\kappa t}\frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}V_tU_t|S_t=K]}{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}|S_t=K]} \\ 
- &  -2\sigma_r e^{-\kappa t}\frac{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}V_t(\Theta_t\Xi_t-\Lambda_t)|S_t=K]}{\mathbb{E}^{\mathbb{Q}^T}[P_{tT}^{-1}|S_t=K]} \numberthis \label{eq: localVolatility_forward_HullWhite}
-\end{align*}
-
-\subsection{The Particle Method - Hull White }
-In the particle algorithm for the hybrid Hull-White/Dupire model, a particle can then be described by $(f_t, r_t- r^0_t )$. Simulate the $T$-forward price $f_t = S_t/P_{tT}$ under the final forward measure as follows:
-$$ df_t^i=  f_t^i\sigma_N(t,f_t^iP_{tT}^i)dW_t^i+f_t^i\sigma_r A(t,T)dB_t^i $$
-where $B^i$ and $W^i$ are $\mathbb{Q}^T$-Brownian motions.\\
-Using the representation (\ref{eq: localVolatility_forward_HullWhite}) for the local volatility, we define:
-
-\begin{align*}
-\sigma_N(t,K)^2 = \sigma_{Dup}(t,K)^2 & -2\sigma_r\rho e^{-\kappa t}\frac{\sum_{i=1}^N \Pi_t^{i} V_t^iU_t^i \delta_{t,N}(S_t^i-K) }{\sum_{i=1}^N \Pi_t^{i} \delta_{t,N}(S_t^i-K)} \\
-&  -2\sigma_r e^{-\kappa t}\frac{\sum_{i=1}^N \Pi_t^{i}V_t^i(\Theta^i_t\Xi^i_t-\Lambda^i_t)\delta_{t,N}(S_t^i-K) }{\sum_{i=1}^N \Pi_t^{i} \delta_{t,N}(S_t^i-K)} \numberthis \label{eq: discrete_localVolatility_forward_HullWhite}
-\end{align*}
-
-with:
-
-$$ \Pi_t^{i} = \exp\bigg( A(t,T)(r_t^i-r_t^0)+\frac{\sigma_r^2}{4\kappa^3}(e^{-\kappa T}-e^{-\kappa t})^2(e^{2\kappa t}-1)     \bigg) $$
-
-\subsection{Time discretization}
+\section{One stochastic rate: time discretization and algorithm}\label{app: oneRate}
 As anticipated before, at each iteration of the algorithm and for each particle, we need to simulate 3 processes
 $f_t$, $r_t$, $V_t$, and compute 3 integrals $U_t$, $\Theta_t$, $\Lambda_t$.
 
-\subsubsection{Processes: $f_t$ and $r_t$}
+\subsection{Processes: $f_t$ and $r_t$}
 Let $\{t_j\}$ be a discretization of $[0,T]$ and consider a single particle.\\
 In order to simulate $(f_{t_{j+1}}, r_{t_{j+1}} - r^0_{t_{j+1}})$ from $(f_{t_{j}}, r_{t_{j}} - r^0_{t_{j}})$, one can observe that, from (\ref{eq: hullWhiteSolution}):
 
@@ -107,10 +35,10 @@ with
 & J_j^2 = \frac{1-e^{-2\kappa(t_{j+1}-t_j) } }{2\kappa(t_{j+1}-t_j)} \\
 & L_j = \frac{J_j^1}{\kappa}-e^{-\kappa(T + t_{j+1}) } \frac{ e^{2\kappa t_{j+1} }-e^{2\kappa t_{j} }  }{2\kappa^2(t_{j+1}-t_{j})}
 \end{align*}
-\subsubsection{Process: $V_t$}
+\subsection{Process: $V_t$}
 For $V_t$ we shall start with a plain Euler discretization scheme. Refinements might follow.\\
 The computation of the partial derivative $\partial_S\sigma$ in $V_t$ will be addressed in dependence on the chosen interpolation technique.
-\subsubsection{Integrals: $U_t$, $\Theta_t$, $\Lambda_t$}
+\subsection{Integrals: $U_t$, $\Theta_t$, $\Lambda_t$}
 First note that $V_t$ is computed over the time grid $\{t_j\}$, hence it is a discrete vector of values.
 Therefore we set $ V_t = (V_{t_{j+1}}+V_{t_{j}})/2 $ for all $t\in [t_j,t_{j+1}]$. Same reasoning applies for $\Theta_t$.\\
 From (\ref{eq: malliavinWeights}) we have: 
@@ -162,22 +90,3 @@ Let $\{t_j\}$ be a discretization of $[0,T]$:
 \end{itemize}
 \item[5.] Set $j:=j+1$, iterate steps 2,3 and 4 up to maturity T
 \end{itemize}
-
-\subsection{An equivalent one-process form}\label{subsec: oneProcess}
-The five objects $V_t,U_t,\Theta_t,\Lambda_t,\Xi_t$ can be replaced by a single process. Define
-$$ \ell_t := \sigma_r e^{-\kappa t}\,V_t\big(\rho U_t+\Theta_t\Xi_t-\Lambda_t\big). $$
-Since $\rho U_t+\Theta_t\Xi_t-\Lambda_t$ has finite variation, with
-$d(\rho U_t+\Theta_t\Xi_t-\Lambda_t)=V_t^{-1}\big(\rho e^{\kappa t}\sigma(t,S_t)+e^{-\kappa t}\Xi_t\big)dt$,
-It\^o's formula gives
-\begin{equation}\label{eq: oneProcess}
-d\ell_t=\ell_t\Big[g(t,S_t)\big(dW_t-\sigma(t,S_t)dt\big)-\kappa\,dt\Big]
-+\Big[v(t)+\rho\,\sigma_r\,\sigma(t,S_t)\Big]dt,\qquad \ell_0=0,
-\end{equation}
-where
-$$ g(t,S)=S\,\partial_S\sigma(t,S),\qquad v(t)=\sigma_r^2\,\frac{1-e^{-2\kappa t}}{2\kappa}, $$
-and $W$ is the $\mathbb{Q}$-Brownian motion, $dW_t=dW^T_t+\rho\,\sigma_P^T(t)dt$. Note that $v(t)$ is the variance of the Hull-White state at time $t$.
-The right hand side of (\ref{eq: malliavinHullWhite}) is then $2\,\mathbb{E}^{\mathbb{Q}^t}[\ell_t\,|\,S_t=K]$ and (\ref{eq: discrete_localVolatility_forward_HullWhite}) becomes
-\begin{equation}\label{eq: oneProcessParticle}
-\sigma_N(t,K)^2=\sigma_{Dup}(t,K)^2-2\,\frac{\sum_{i=1}^N\Pi^i_t\,\ell^i_t\,\delta_{t,N}(S^i_t-K)}{\sum_{i=1}^N\Pi^i_t\,\delta_{t,N}(S^i_t-K)} .
-\end{equation}
-One Euler step of (\ref{eq: oneProcess}) per particle replaces the simulation of $V_t$ and the three quadratures of the previous section. This is the form that extends to the three-factor model of Section \ref{sec: threeFactor}: there, $\ell_t$ is the logarithmic sensitivity of the spot to a perturbation of the rate driver along the Hull-White kernel.

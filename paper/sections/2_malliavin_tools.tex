@@ -1,0 +1,50 @@
+\section{Malliavin calculus: the tools used}\label{sec: tools}
+Before moving to the actual computation of the Malliavin derivatives in (\ref{eq: threeFactorGeneralMalliavin}) required for an explicit formulation of the Particle Algorithm in the case of three-factor FX SIR-LV model, I attempt to give a short introduction to the tools needed to understand the following derivations.
+I need to assume familiarity with the basics of Malliavin calculus. These can be found in the first chapter of \cite{nualart} and I will refer to the Nualart's book through out the computations.
+
+The results I am going to use are the \textit{commutative relation} between the Derivative and Divergence operators (Proposition 1.3.8 in \cite{nualart}) and the \textit{chain rule} for the Derivative operator (Proposition 1.2.3 in \cite{nualart}).
+
+\begin{prop}[Commutative Relation between $\MD$ and $\delta$]\ \\
+Provided that the condition of Proposition 1.3.8 in \cite{nualart} are satisfied, one has:
+
+\begin{equation}\label{eq: commumativeRelation}
+\MD_s( \delta(u) )= u_s\mathbb{I}_{s\leq t} + \int_0^t\MD_s u_r \mathbb{I}_{s\leq t}dW_r
+\end{equation}
+for a stochastic process $u$ on $L^2([0,t] \times \Omega)$.
+\end{prop}
+
+To get familiar with such tools, I am going to solve the following easy exercise (exercise 2.2.1 in\cite{nualart} ):\\
+
+\begin{exe}
+Let $\sigma$ and $b$ be continuously differentiable functions on $\mathbb{R}$ with bounded
+derivatives. Consider the solution $X = \{X_t, t \in [0, T]\}$ of the stochastic
+differential equation
+$$ X_t = x_0 + \int_0^t\sigma(X_r)dW_r + \int_0^tb(X_r)dr$$
+Show that for $s\leq t$ we have
+$$ \MD_sX_t = \sigma(X_s)\exp\bigg(\int_s^t\sigma'(X_r)dW_r  + \int_s^t[b'(X_r)-\frac{1}{2}\sigma'(X_r)^2]dr  \bigg) $$
+Where $\MD$ is the Malliavin derivative with respect to the Brownian Motion $W$.
+\end{exe}\
+\\
+\begin{sol}
+Let's first rewrite the previous SDE as:
+$$ X_t = x_0 + \delta\big(\sigma(X)\big) + <b(X),\mathbb{I}_{[0,t]}> $$
+where $\delta$ is the Skorohod integral and $<\cdot, \cdot>$ is the inner product, both under the White Noise case (Section 1.2.1 in \cite{nualart}).\\
+Then:
+\begin{align*}
+\MD_sX_t = & \MD_s\delta\big(\sigma(X)\big) + <\MD_sb(X),\mathbb{I}_{[0,t]}>\\
+= & \sigma(X_s)\mathbb{I}_{s\leq t} + \delta\big(\MD_s\sigma(X)\mathbb{I}_{s\leq t}\big) +  <\MD_sb(X),\mathbb{I}_{[0,t]}>
+\end{align*} 
+Where we get the second line from an application of the \textit{commutative relation}.
+By applying the \textit{chain rule} of the Malliavin derivative to $\sigma$ and $b$ we get:
+\begin{align*}
+\MD_sX_t =\MD_sX_t\mathbb{I}_{s\leq t}= & \sigma(X_s)\mathbb{I}_{s\leq t} + \delta\big( \sigma'(X)\cdot \MD_sX \mathbb{I}_{s\leq t}\big) + < b'(X) \cdot\MD_s X,\mathbb{I}_{[0,t]}>\\
+= & \sigma(X_s) + \int_0^t \sigma'(X_r)\cdot\MD_sX_r \mathbb{I}_{s\leq t} dW_r + \int_0^t b'(X_r) \cdot\MD_s X_r\mathbb{I}_{s\leq t} dr
+\end{align*} 
+Define now $S_t:= \MD_sX_t\mathbb{I}_{s\leq t}$, one may write
+$$ S_t = \sigma(X_s)\mathbb{I}_{s\leq t} + \int_0^t \sigma'(X_r)S_rdW_r + \int_0^t b'(X_r) S_rdr,$$
+thus
+$$ dS_t = \sigma'(X_t)S_tdW_t + b'(X_t) S_t dt$$
+which is the SDE driving a Geometric Brownian Motion with initial value equal to $\sigma(X_s)$. So the result is proven $\diamond$ .
+\end{sol}
+
+The exercise is the scalar case of a general fact used below: for a diffusion $X$, $\MD_sX_t=J_tJ_s^{-1}\times$(diffusion coefficient at $s$), where $J$ is the first variation (tangent) process of $X$. For a system, $J$ is matrix-valued.

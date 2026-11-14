@@ -1,0 +1,49 @@
+\section{Time Discretization under $\mathbb{Q}^{d^T}$}\label{subsec: discretisation3F}
+Let $\Delta=t_{j+1}-t_j$ and $\sigma_j=\sigma(t_j,S_{t_j})$. Freezing the local volatility over the step and integrating (\ref{eq: threeFactorModelForwardHullWhite}):
+\begin{align*}
+x^d_{t_{j+1}} ={}& e^{-\kappa_d\Delta}x^d_{t_j}+\sigma^d_r\,G^d_j-(\sigma^d_r)^2\Delta\,L^d_j \numberthis \label{eq: discretizationDomesticInterestRate}\\
+x^f_{t_{j+1}} ={}& e^{-\kappa_f\Delta}x^f_{t_j}+\sigma^f_r\,G^f_j-\rho_{Sf}\sigma^f_r\,\sigma_j\,\Delta\,J^{1,f}_j-\rho_{df}\sigma^d_r\sigma^f_r\,\Delta\,L^{1,df}_j \numberthis \label{eq: discretizationForeignInterestRate}\\
+f_{t_{j+1}} ={}&  f_{t_j}\exp\bigg( \sigma_j\,\Delta W_j + \sigma^d_r H^d_j - \sigma^f_r H^f_j
+ - \frac{1}{2}\Delta\big[\sigma_j^2 + 2\rho_{Sd}\sigma^d_r\sigma_jI^{1,d}_j - 2\rho_{Sf}\sigma^f_r\sigma_jI^{1,f}_j   \\
+& \qquad\qquad + (\sigma^d_r)^2 I^{2,d}_j + (\sigma^f_r)^2 I^{2,f}_j - 2\rho_{df} \sigma^d_r\sigma^f_rK^{df}_j\big]
+\bigg) \numberthis \label{eq: discretizationForward3F}
+\end{align*}
+where
+$$\Delta W_j=W^{S^T}_{t_{j+1}}-W^{S^T}_{t_{j}},\qquad G^i_j=\int_{t_j}^{t_{j+1}}e^{-\kappa_i(t_{j+1}-t) }dB_t^{i^T},\qquad H^i_j=\int_{t_j}^{t_{j+1}} A^i(t,T) dB_t^{i^T}. $$
+The simulation of the three state variables boils down to simulate the Gaussian vector
+$$\big(\Delta W_j,\,G^d_j,\,H^d_j,\,G^f_j,\,H^f_j\big)$$
+whose covariance matrix is $\Delta\,\Sigma_j^{FX}$ where
+\[\Sigma_j^{FX}= \left( \begin{array}{ccccc}
+1 & \rho_{Sd} J_j^{1,d} & \rho_{Sd} I^{1,d}_j & \rho_{Sf} J_j^{1,f} & \rho_{Sf} I^{1,f}_j \medskip\\
+\cdot & J_j^{2,d} & L_j^d & \rho_{df}J_j^{df} & \rho_{df}L^{2,df}_j \medskip\\
+\cdot & \cdot & I^{2,d}_j & \rho_{df}L^{1,df}_j & \rho_{df}K^{df}_j \medskip\\
+\cdot & \cdot & \cdot & J_j^{2,f} & L_j^f  \medskip\\
+\cdot & \cdot & \cdot & \cdot & I^{2,f}_j
+\end{array} \right)\]
+with ($i\in \{d,f\}$)
+\begin{align*}
+& J_j^{1,i} = \frac{1-e^{-\kappa_i\Delta }}{\kappa_i\Delta}, \qquad
+ J_j^{2,i} = \frac{1-e^{-2\kappa_i\Delta } }{2\kappa_i\Delta}, \qquad
+ J_j^{df} = \frac{1 - e^{-(\kappa_f +\kappa_d)\Delta}}{(\kappa_f +\kappa_d)\Delta} \bigskip\\
+& I^{1,i}_j = \frac{\kappa_i\Delta-e^{-\kappa_i T }(e^{\kappa_i t_{j+1} }-e^{\kappa_i t_{j} }) }{\kappa_i^2 \Delta} \\
+& I^{2,i}_j = \frac{\kappa_i\Delta  -2e^{-\kappa_i T }(e^{\kappa_i t_{j+1} }-e^{\kappa_i t_{j} }) +\frac{1}{2}e^{-2\kappa_i T }(e^{2\kappa_i t_{j+1} }-e^{2\kappa_i t_{j} }) }{\kappa_i^3\Delta}\\
+& L_j^i = \frac{J_j^{1,i}}{\kappa_i}-e^{-\kappa_i(T + t_{j+1}) } \frac{ e^{2\kappa_i t_{j+1} }-e^{2\kappa_i t_{j} }  }{2\kappa_i^2\Delta} \\
+& L^{1,df}_j = \frac{J_j^{1,f}}{\kappa_d}-e^{- (\kappa_d T + \kappa_f t_{j+1}) } \frac{ e^{(\kappa_f +\kappa_d) t_{j+1} }-e^{(\kappa_f +\kappa_d) t_{j} }  }{\kappa_d(\kappa_f +\kappa_d)\Delta}\\
+& L^{2,df}_j = \frac{J_j^{1,d}}{\kappa_f}-e^{- (\kappa_f T + \kappa_d t_{j+1}) } \frac{ e^{(\kappa_f +\kappa_d) t_{j+1} }-e^{(\kappa_f +\kappa_d) t_{j} }  }{\kappa_f(\kappa_f +\kappa_d)\Delta}\\
+& K^{df}_j = \frac{1}{\kappa_d\kappa_f\Delta}\bigg[\Delta - \frac{e^{-\kappa_d T}(e^{\kappa_d t_{j+1}} - e^{\kappa_d t_j} )}{\kappa_d} - \frac{e^{-\kappa_f T}(e^{\kappa_f t_{j+1}} - e^{\kappa_f t_j} )}{\kappa_f}\\
+& \qquad\qquad\qquad + \frac{e^{-(T-t_{j+1})(\kappa_f +\kappa_d)} - e^{-(T-t_{j})(\kappa_f +\kappa_d)}}{\kappa_f +\kappa_d}\bigg]
+\end{align*}
+The displayed closed forms identify the exact covariance, but direct
+floating-point subtraction can be unstable for small mean reversion or small
+steps. The accompanying implementation evaluates these averages by positive
+Gauss--Legendre quadrature (at least 16 nodes), using
+$A^i(u,T)=-\operatorname{expm1}(-\kappa_i(T-u))/\kappa_i$ and its continuous
+limit $T-u$ at zero mean reversion. This numerical quadrature is not an additional
+model time discretization; its accuracy is checked against independent dense trapezoidal
+quadrature. It avoids cancellation in composite expressions. For sampling, QR factorization of the rectangular weighted kernel factor
+is used directly, avoiding a Cholesky factorization of its rounded Gram matrix.
+Extremely small steps can still require higher precision to resolve differences
+below floating-point accuracy.
+
+Each coefficient is the average over the step of a product of two of the kernels $1$, $e^{-\kappa_i(t_{j+1}-t)}$, $A^i(t,T)$; for instance
+$$K^{df}_j=\frac{1}{\Delta}\int_{t_j}^{t_{j+1}}A^d(t,T)A^f(t,T)dt,\qquad L^{1,df}_j=\frac{1}{\Delta}\int_{t_j}^{t_{j+1}}A^d(t,T)e^{-\kappa_f(t_{j+1}-t)}dt.$$

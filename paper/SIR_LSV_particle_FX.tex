@@ -15,15 +15,15 @@ Local-Stochastic Volatility  (SIR-LSV) models \\ with Particle Algorithm and ext
 \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 
 \theoremstyle{plain}
-\newtheorem{thm}{Theorem}[subsection]
+\newtheorem{thm}{Theorem}[section]
 \newtheorem{lem}[thm]{Lemma}
 \newtheorem{prop}[thm]{Proposition}
 \newtheorem*{cor}{Corollary}
 
 \theoremstyle{definition}
-\newtheorem{defn}{Definition}[subsection]
-\newtheorem{conj}{Conjecture}[subsection]
-\newtheorem{exmp}{Example}[subsection]
+\newtheorem{defn}{Definition}[section]
+\newtheorem{conj}{Conjecture}[section]
+\newtheorem{exmp}{Example}[section]
 
 \theoremstyle{remark}
 \newtheorem*{rem}{Remark}
@@ -56,23 +56,20 @@ We derive the particle (McKean) calibration of local volatility models with stoc
 
 \tableofcontents
 
-% Section 1: one stochastic rate, general short-rate model
-\input{sections/1_stochastic_rates}
-
-% Section 2: one stochastic rate, Hull-White
-\input{sections/2_hull_white_dupire}
-
-% Section 3: long-dated FX, Hull-White domestic and foreign rates
-\input{sections/3a_fx_model_and_calibration}
-\input{sections/3b_fx_malliavin_representation}
-\input{sections/3c_fx_particle_algorithm}
-\input{sections/3d_fx_consistency_checks}
-\input{sections/3e_fx_existence}
-\input{sections/3f_fx_moment_closure}
-\input{sections/3g_fx_scope_and_outlook}
+\input{sections/1_introduction}
+\input{sections/2_malliavin_tools}
+\input{sections/3_one_rate_background}
+\input{sections/4_fx_model}
+\input{sections/5_main_result}
+\input{sections/6_particle_algorithm}
+\input{sections/7_numerical_evidence}
+\input{sections/8a_existence}
+\input{sections/8b_moment_closure}
+\input{sections/9_limits_and_outlook}
 
 \appendix
-\input{sections/A_changes_since_2016}
+\input{sections/A_one_rate_discretisation}
+\input{sections/B_fx_discretisation}
 
 \input{references}
 

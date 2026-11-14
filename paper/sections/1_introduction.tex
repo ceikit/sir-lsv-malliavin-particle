@@ -1,0 +1,11 @@
+\section{Introduction}\label{sec: introduction}
+While for short-dated options (less than 1 year), assuming constant interest rates does not lead to
+significant mispricing, for long-dated options the effect of interest rate volatility becomes increasingly
+pronounced with increasing maturity and can become as important as that of the FX spot volatility.
+
+Here we consider a three factor model in which uncertainty in the spot process is explained by a geometric Brownian motion and both the domestic and foreign interest rates follow Hull-White processes.
+To incorporate smile/skew effects in the three-factor pricing model, we introduce a Local Volatility function in the spot process.
+
+The goal of this section is to explicitly derive the Particle Algorithm of \cite{guyonLabordere} in a Three Factor Local Volatility Stochastic Interest Rate (SIR-LV) framework. We derive the calibration condition for one factor stochastic domestic and foreign rates with unspecified dynamics, and then, for Hull-White rates, a Malliavin representation of it which can be evaluated with a single system of particles.
+
+Monte Carlo calibration of local volatility in an FX setting with two stochastic rates is studied in \cite{ogetbilGanesanHientzsch} (see also \cite{ogetbilHientzsch} for the corresponding Dupire formula), and a particle method with control variates for a four-factor FX local-stochastic volatility model in \cite{cozma}; an optimal transport approach to stochastic-rates calibration is developed in \cite{josephLoeperObloj}.

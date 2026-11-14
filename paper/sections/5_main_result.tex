@@ -1,7 +1,7 @@
-\subsection{Malliavin representation}\label{subsec: malliavin3F}
+\section{Malliavin representation with two stochastic rates}\label{subsec: malliavin3F}
 Following \cite{guyonLabordere}, we give an alternative expression to the calibration condition (\ref{eq: threeFactorCalibrationCondition}), in order to achieve a more accurate and smooth estimation of the local volatility for strikes that are far from the money.
 
-\subsubsection{The general formula}
+\subsection{The general formula}
 Two elementary facts about the forward measures are needed.
 \begin{lem}[Forward measures]\label{lem: forwardMeasures}
 For every $t$, with $F_{0t}=S_0P^f_{0t}/P^d_{0t}$ the forward FX rate,
@@ -36,58 +36,7 @@ For Hull-White rates the Clark-Ocone integrands are deterministic,
 \end{equation}
 because each rate is autonomous and Gaussian under its own forward measure. What remains is to evaluate the two integrated sensitivities of $S_t$.
 
-\subsubsection{Malliavin derivative demystified}
-Before moving to the actual computation of the Malliavin derivatives in (\ref{eq: threeFactorGeneralMalliavin}) required for an explicit formulation of the Particle Algorithm in the case of three-factor FX SIR-LV model, I attempt to give a short introduction to the tools needed to understand the following derivations.
-I need to assume familiarity with the basics of Malliavin calculus. These can be found in the first chapter of \cite{nualart} and I will refer to the Nualart's book through out the computations.
-
-The results I am going to use are the \textit{commutative relation} between the Derivative and Divergence operators (Proposition 1.3.8 in \cite{nualart}) and the \textit{chain rule} for the Derivative operator (Proposition 1.2.3 in \cite{nualart}).
-
-\begin{prop}[Commutative Relation between $\MD$ and $\delta$]\ \\
-Provided that the condition of Proposition 1.3.8 in \cite{nualart} are satisfied, one has:
-
-\begin{equation}\label{eq: commumativeRelation}
-\MD_s( \delta(u) )= u_s\mathbb{I}_{s\leq t} + \int_0^t\MD_s u_r \mathbb{I}_{s\leq t}dW_r
-\end{equation}
-for a stochastic process $u$ on $L^2([0,t] \times \Omega)$.
-\end{prop}
-
-To get familiar with such tools, I am going to solve the following easy exercise (exercise 2.2.1 in\cite{nualart} ):\\
-
-\begin{exe}
-Let $\sigma$ and $b$ be continuously differentiable functions on $\mathbb{R}$ with bounded
-derivatives. Consider the solution $X = \{X_t, t \in [0, T]\}$ of the stochastic
-differential equation
-$$ X_t = x_0 + \int_0^t\sigma(X_r)dW_r + \int_0^tb(X_r)dr$$
-Show that for $s\leq t$ we have
-$$ \MD_sX_t = \sigma(X_s)\exp\bigg(\int_s^t\sigma'(X_r)dW_r  + \int_s^t[b'(X_r)-\frac{1}{2}\sigma'(X_r)^2]dr  \bigg) $$
-Where $\MD$ is the Malliavin derivative with respect to the Brownian Motion $W$.
-\end{exe}\
-\\
-\begin{sol}
-Let's first rewrite the previous SDE as:
-$$ X_t = x_0 + \delta\big(\sigma(X)\big) + <b(X),\mathbb{I}_{[0,t]}> $$
-where $\delta$ is the Skorohod integral and $<\cdot, \cdot>$ is the inner product, both under the White Noise case (Section 1.2.1 in \cite{nualart}).\\
-Then:
-\begin{align*}
-\MD_sX_t = & \MD_s\delta\big(\sigma(X)\big) + <\MD_sb(X),\mathbb{I}_{[0,t]}>\\
-= & \sigma(X_s)\mathbb{I}_{s\leq t} + \delta\big(\MD_s\sigma(X)\mathbb{I}_{s\leq t}\big) +  <\MD_sb(X),\mathbb{I}_{[0,t]}>
-\end{align*} 
-Where we get the second line from an application of the \textit{commutative relation}.
-By applying the \textit{chain rule} of the Malliavin derivative to $\sigma$ and $b$ we get:
-\begin{align*}
-\MD_sX_t =\MD_sX_t\mathbb{I}_{s\leq t}= & \sigma(X_s)\mathbb{I}_{s\leq t} + \delta\big( \sigma'(X)\cdot \MD_sX \mathbb{I}_{s\leq t}\big) + < b'(X) \cdot\MD_s X,\mathbb{I}_{[0,t]}>\\
-= & \sigma(X_s) + \int_0^t \sigma'(X_r)\cdot\MD_sX_r \mathbb{I}_{s\leq t} dW_r + \int_0^t b'(X_r) \cdot\MD_s X_r\mathbb{I}_{s\leq t} dr
-\end{align*} 
-Define now $S_t:= \MD_sX_t\mathbb{I}_{s\leq t}$, one may write
-$$ S_t = \sigma(X_s)\mathbb{I}_{s\leq t} + \int_0^t \sigma'(X_r)S_rdW_r + \int_0^t b'(X_r) S_rdr,$$
-thus
-$$ dS_t = \sigma'(X_t)S_tdW_t + b'(X_t) S_t dt$$
-which is the SDE driving a Geometric Brownian Motion with initial value equal to $\sigma(X_s)$. So the result is proven $\diamond$ .
-\end{sol}
-
-The exercise is the scalar case of a general fact used below: for a diffusion $X$, $\MD_sX_t=J_tJ_s^{-1}\times$(diffusion coefficient at $s$), where $J$ is the first variation (tangent) process of $X$. For a system, $J$ is matrix-valued.
-
-\subsubsection{Why the foreign rate cannot be treated by a change of measure}\label{subsubsec: obstacle}
+\subsection{Why the foreign rate cannot be treated by a change of measure}\label{subsubsec: obstacle}
 Under $\mathbb{Q}^{f}$ the foreign rate is autonomous, exactly as the domestic rate is under $\mathbb{Q}^d$, and it is tempting to compute its Malliavin derivative there and to transport the result to the domestic measure (a change-of-variable formula for the Malliavin derivative under a Girsanov shift is given in \cite{ewald}). This does not lead to a closed form, for two reasons.
 
 First, the domestic term of (\ref{eq: threeFactorGeneralMalliavin}) requires the derivative with respect to $B^{d^t}$, not with respect to the foreign driver.
@@ -97,7 +46,7 @@ while $\MD^{B^{d^T}}_sS_t$ depends on $\MD^{B^{d^T}}_sr^f_t$ through the drift $
 
 The way out is not to solve for the two-parameter family $\MD_sS_t$, $0\leq s\leq t$, at all: because the kernels (\ref{eq: kernels}) factorise as $e^{-\kappa t}\cdot e^{\kappa s}$, the $s$-integral in (\ref{eq: threeFactorGeneralMalliavin}) can be carried through the linear system.
 
-\subsubsection{Integrated sensitivities}
+\subsection{Integrated sensitivities}
 Let $X_t=(S_t,r^d_t,r^f_t)^\top$. Under $\mathbb{Q}^d$, $dX_t=b(t,X_t)dt+\mathcal{A}(t,X_t)dZ_t$ with
 $$ b(t,X)=\begin{pmatrix} S(r^d-r^f)\\ \kappa_d(\theta_d(t)-r^d)\\ \kappa_f(\theta_f(t)-r^f)-\rho_{Sf}\sigma^f_r\,\sigma(t,S)\end{pmatrix},\qquad
 \mathcal{A}(t,X)=\begin{pmatrix} S\sigma(t,S)&0&0\\ 0&\sigma^d_r&0\\ 0&0&\sigma^f_r\end{pmatrix}\mathcal{C}. $$
@@ -160,7 +109,7 @@ The source term is $e^{\kappa_ft}a_f$ and $Y^f_t=e^{-\kappa_ft}\mathcal{Y}_t$.
 \end{proof}
 The matrix $H_t$ is the diffusion direction of the spot driver times the gradient of the Girsanov kernel between $\mathbb{Q}^d$ and $\mathbb{Q}^f$. It is exactly what a substitution of Brownian motions loses, and it is the reason why $Y^f$ does not satisfy the same variational system as $Y^d$. The systems (\ref{eq: matrixSystem}) have no index $s$ left, and do not depend on a terminal maturity.
 
-\subsubsection{Reduction to four scalar processes}
+\subsection{Reduction to four scalar processes}
 Two components of (\ref{eq: matrixSystem}) are deterministic: $Y^{d,d}_t=v_d(t)$ and $Y^{f,f}_t=v_f(t)$, where
 $$ v_i(t)=(\sigma^i_r)^2\,\frac{1-e^{-2\kappa_it}}{2\kappa_i},\qquad i\in\{d,f\}, $$
 is the variance of the Hull-White state $x^i_t$ (for $Y^{f,f}$, note that the third row of $M_t+H_t$ is $(0,0,-\kappa_f)$: the quanto term cancels, as it must under $\mathbb{Q}^f$). For the remaining four, pass to logarithmic sensitivities of the spot,
