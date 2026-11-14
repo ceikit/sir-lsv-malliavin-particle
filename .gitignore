@@ -11,5 +11,5 @@ eurusd_cme_options_*.csv
 *.dbn
 *.dbn.zst
 # files derived from the licensed settlement data
-test3/*.csv
-test3/*.npz
+calibration/work/
+calib_*.npz

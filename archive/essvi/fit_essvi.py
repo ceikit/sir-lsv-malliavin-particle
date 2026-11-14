@@ -8,6 +8,10 @@ Constraints, from one slice to the next (no calendar arbitrage):
 and on each slice (no butterfly arbitrage, Gatheral-Jacquier):
   psi (1 + |rho|) <= 4,   psi^2 (1 + |rho|) <= 4 theta
 Input: implied_vols.csv (build_surface.py). Output: essvi_fits.csv and a fit report.
+
+Archived: this fit was tried for the calibration test and rejected (it misfit the 2027 risk
+reversals by up to 1.6 vol points). Run it from the folder that holds implied_vols.csv
+(calibration/work by default).
 """
 import numpy as np, pandas as pd
 from scipy.optimize import minimize

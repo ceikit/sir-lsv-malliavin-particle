@@ -1,7 +1,11 @@
-"""Deterministic covariance regression checks; run directly (NumPy only)."""
+"""Deterministic regression checks of the Gaussian step covariance (NumPy only).
+
+usage: python checks/check_covariance_stability.py
+"""
 import numpy as np
-from gaussian_covariance import step_coefficients, bond_loading, step_covariance_factor
-from check_forward_measure import Sigma
+
+import _repo  # noqa: F401  (import path)
+from sirlsv.gaussian_covariance import bond_loading, step_coefficients, step_covariance, step_covariance_factor
 
 
 def run():
@@ -11,7 +15,7 @@ def run():
         for dt in [.5,.01,.0001]:
             for t0 in [0.,4.,6.-dt]:
                 c=step_coefficients(t0,t0+dt,6.,kd,kf)
-                cov=Sigma(c)
+                cov=step_covariance(c,correlation)
                 np.linalg.cholesky(cov)
                 factor = step_covariance_factor(t0,t0+dt,6.,kd,kf,correlation)
                 np.testing.assert_allclose(factor @ factor.T, cov, rtol=2e-14, atol=2e-14)

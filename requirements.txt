@@ -1,0 +1,5 @@
+numpy>=2.0
+scipy
+pandas
+# only for data/pull_eurusd_options_databento.py:
+# databento

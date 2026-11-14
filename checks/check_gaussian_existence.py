@@ -2,10 +2,14 @@
 
 Requires scipy in addition to numpy. The test checks the independently integrated
 forward variance, not merely the defining ODE identity.
+
+usage: python checks/check_gaussian_existence.py
 """
 import numpy as np
 from scipy.integrate import solve_ivp, quad
-from gaussian_covariance import bond_loading
+
+import _repo  # noqa: F401  (import path)
+from sirlsv.gaussian_covariance import bond_loading
 
 
 def run():

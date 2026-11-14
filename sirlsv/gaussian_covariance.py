@@ -70,3 +70,18 @@ def step_covariance_factor(t0, t1, terminal, kd, kf, correlation):
     factor = triangular.T
     signs = np.where(np.diag(factor) < 0, -1., 1.)
     return factor * signs[None, :]
+
+
+def step_covariance(c, correlation):
+    """5x5 covariance (excluding dt) of the step variables (dW, G^d, H^d, G^f, H^f).
+
+    c is the dictionary returned by step_coefficients; correlation is the 3x3 driver
+    matrix ordered (spot, d, f). Formed explicitly: use step_covariance_factor for sampling.
+    """
+    rSd, rSf, rdf = correlation[0][1], correlation[0][2], correlation[1][2]
+    return np.array([
+        [1.0,            rSd * c["J1d"], rSd * c["I1d"],  rSf * c["J1f"],  rSf * c["I1f"]],
+        [rSd * c["J1d"], c["J2d"],       c["Ld"],         rdf * c["Jdf"],  rdf * c["L2df"]],
+        [rSd * c["I1d"], c["Ld"],        c["I2d"],        rdf * c["L1df"], rdf * c["Kdf"]],
+        [rSf * c["J1f"], rdf * c["Jdf"], rdf * c["L1df"], c["J2f"],        c["Lf"]],
+        [rSf * c["I1f"], rdf * c["L2df"], rdf * c["Kdf"], c["Lf"],         c["I2f"]]])

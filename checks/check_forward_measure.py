@@ -1,26 +1,29 @@
 """
 Check of the simulation scheme under the domestic T-forward measure Q^{d,T}
-(Section 3.4 of the merged paper) and of the particle weights (Section 3.6).
+("Time Discretization under Q^{d^T}" in the paper) and of the particle weights.
 
  1. stable step coefficients (I, J, L, K, ...) against independent quadrature;
  2. exact Gaussian-vector scheme for (f, x^d, x^f) under Q^{d,T}: martingale /
     bond-price identities at an intermediate date t < T;
  3. the sensitivity identities with Q^{d,T} particles and weights 1/P^d_{tT}.
 
-usage: python check_forward_measure.py [steps_per_year] [pairs] [seed]
+usage: python checks/check_forward_measure.py [steps_per_year] [pairs] [seed]
 """
 import sys
-import numpy as np
-from gaussian_covariance import bond_loading, step_coefficients, step_covariance_factor
 
-kd, sd = 0.05, 0.012
-kf, sf = 0.10, 0.015
-rSd, rSf, rdf = 0.35, -0.30, 0.40
-fd, ff = 0.03, 0.01
-s0, a, b = 0.12, 0.6, 2.0
-S0 = 1.0
+import numpy as np
+
+import _repo  # noqa: F401  (import path)
+from sirlsv.gaussian_covariance import bond_loading, step_coefficients, step_covariance_factor
+from sirlsv.model import tanh_local_vol
+from sirlsv.montecarlo import antithetic_mean as pm
+from sirlsv.prescribed_vol import FD as fd, FF as ff, PARAMS, S0, VOL_B as b, VOL_LEVEL as s0
+from sirlsv.sensitivities import sensitivity_step
+
+kd, sd, kf, sf = PARAMS.kd, PARAMS.sd, PARAMS.kf, PARAMS.sf
+rSd, rSf, rdf = PARAMS.rSd, PARAMS.rSf, PARAMS.rdf
+a = 0.6                      # skew of the local volatility
 T, t_eval = 6.0, 4.0
-spy = 50
 
 
 def A(k, t, TT):
@@ -46,15 +49,6 @@ def quad_check():
     print(f"1. step coefficients vs quadrature: max relative error = {worst:.1e}")
 
 
-def Sigma(c):
-    return np.array([
-        [1.0,            rSd * c["J1d"], rSd * c["I1d"],  rSf * c["J1f"],  rSf * c["I1f"]],
-        [rSd * c["J1d"], c["J2d"],       c["Ld"],         rdf * c["Jdf"],  rdf * c["L2df"]],
-        [rSd * c["I1d"], c["Ld"],        c["I2d"],        rdf * c["L1df"], rdf * c["Kdf"]],
-        [rSf * c["J1f"], rdf * c["Jdf"], rdf * c["L1df"], c["J2f"],        c["Lf"]],
-        [rSf * c["I1f"], rdf * c["L2df"], rdf * c["Kdf"], c["Lf"],         c["I2f"]]])
-
-
 def bond(k, s, f0, t, x):
     c = x + .5 * s * s * bond_loading(k, t) ** 2
     variance = s * s * bond_loading(2 * k, t)
@@ -62,13 +56,7 @@ def bond(k, s, f0, t, x):
     return np.exp(-f0 * (T-t) - loading*c - .5*loading*loading*variance), c
 
 
-def pm(x):
-    h = len(x) // 2
-    p = 0.5 * (x[:h] + x[h:])
-    return p.mean(), p.std(ddof=1) / np.sqrt(h)
-
-
-def run(N=400_000, seed=3):
+def run(N=400_000, seed=3, spy=50):
     rng = np.random.default_rng(seed)
     n = int(round(t_eval * spy))
     D = 1.0 / spy
@@ -80,24 +68,17 @@ def run(N=400_000, seed=3):
     for j in range(n):
         t0, t1 = j * D, (j + 1) * D
         c = coeffs(t0, t1)
-        correlation = np.array([[1, rSd, rSf], [rSd, 1, rdf], [rSf, rdf, 1]])
-        ch = step_covariance_factor(t0, t1, T, kd, kf, correlation)
+        ch = step_covariance_factor(t0, t1, T, kd, kf, PARAMS.correlation())
         Z = rng.standard_normal((N, 5)) @ ch.T
         Z = np.concatenate([Z, -Z]) * np.sqrt(D)
         dW, Gd, Hd, Gf, Hf = Z.T
         Pd, _ = bond(kd, sd, fd, t0, xd)
         Pf, _ = bond(kf, sf, ff, t0, xf)
         S = np.exp(lnf) * Pd / Pf
-        th = np.tanh(b * np.log(S / S0))
-        sig = s0 * (1 - a * th)
-        g = -s0 * a * b * (1 - th * th)
+        sig, g = tanh_local_vol(np.log(S / S0), s0, a, b)
         dWq = dW - rSd * sd * D * c["I1d"]          # increment of the Q^d Brownian motion
         vd, vf = var(t0, kd, sd), var(t0, kf, sf)
-        ld_n = ld * (1 + g * (dWq - sig * D) - kd * D) + (vd - zf + rSd * sd * sig) * D
-        zf_n = zf + (-(kd + kf) * zf - rSf * sf * g * ld + rdf * sd * sf) * D
-        lf_n = lf * (1 + g * dWq - kf * D) + (zd - vf + rSf * sf * sig) * D
-        zd_n = zd + (-(kd + kf) * zd + rSd * sd * g * lf + rdf * sd * sf) * D
-        ld, zf, lf, zd = ld_n, zf_n, lf_n, zd_n
+        ld, zf, lf, zd = sensitivity_step(ld, zf, lf, zd, g, sig, dWq, D, vd, vf, PARAMS)
         lnf += (sig * dW + sd * Hd - sf * Hf
                 - 0.5 * D * (sig * sig + 2 * rSd * sig * sd * c["I1d"] - 2 * rSf * sig * sf * c["I1f"]
                              + sd * sd * c["I2d"] + sf * sf * c["I2f"] - 2 * rdf * sd * sf * c["Kdf"]))
@@ -130,7 +111,7 @@ def run(N=400_000, seed=3):
 
 
 if __name__ == "__main__":
-    spy = int(sys.argv[1]) if len(sys.argv) > 1 else 50
     quad_check()
-    run(N=int(sys.argv[2]) if len(sys.argv) > 2 else 400_000,
+    run(spy=int(sys.argv[1]) if len(sys.argv) > 1 else 50,
+        N=int(sys.argv[2]) if len(sys.argv) > 2 else 400_000,
         seed=int(sys.argv[3]) if len(sys.argv) > 3 else 3)

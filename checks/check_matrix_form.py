@@ -9,7 +9,10 @@ directly (Euler).  Log form: L^d, L^f with the exponential factored out, so that
 Reports the pathwise agreement of the two forms and the integration-by-parts
 identities evaluated with the Y's.
 
-usage: python check_matrix_form.py [steps_per_year]
+This script is deliberately self-contained: it does not use the shared recursion in
+sirlsv/sensitivities.py, so that it checks it independently.
+
+usage: python checks/check_matrix_form.py [steps_per_year]
 """
 import sys
 import numpy as np

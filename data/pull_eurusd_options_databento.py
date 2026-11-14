@@ -10,12 +10,15 @@ Before downloading it prints Databento's own cost estimate and asks for confirma
 
 Setup (once):   pip install databento
                 export DATABENTO_API_KEY=db-...        (do not paste the key into a chat)
-Run:            python pull_eurusd_options_databento.py 2026-11-12
-Output:         eurusd_cme_options_2026-11-12.csv
+Run:            python data/pull_eurusd_options_databento.py 2026-11-12
+Output:         eurusd_cme_options_2026-11-12.csv   (licensed data: do not commit it)
 
 Not yet run against the live API: the request layout follows Databento's documented
 examples and the installed client's signatures, but the symbol root EUU and the
-date conventions are unverified.  If it returns no rows, send me the printed output.
+date conventions are unverified.
+
+Known issue: build_table keeps the last statistics message per instrument and does not
+look at update_action, so a statistic that was published and then deleted is still used.
 """
 import sys
 import pandas as pd
