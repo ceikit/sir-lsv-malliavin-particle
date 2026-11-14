@@ -1,0 +1,26 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,amssymb,amsthm}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\newtheorem{thm}{Theorem}
+\newtheorem{prop}[thm]{Proposition}
+\title{Exact Discounted First-Moment Closure\\for Three-Factor FX Local Volatility}
+\author{Research extension to the SIR--LV calibration draft}
+\date{14 November 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+We derive a closed forward system for the discounted physical density and
+four discounted integrated-sensitivity moments. It retains the shared-noise
+covariation terms and is exact for nonconstant prescribed local volatility.
+We prove fixed-coefficient identification in a weighted measure class,
+derive full-state compatibility identities, and show that replacing the
+model marginal by the market marginal in the calibration denominator is
+equivalent for regular solutions. Nonlinear calibration existence is not
+established by these results.
+\end{abstract}
+\setcounter{section}{1}
+\input{../sections/3f_fx_moment_closure.tex}
+\end{document}

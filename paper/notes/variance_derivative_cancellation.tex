@@ -1,0 +1,146 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\newtheorem{proposition}{Proposition}
+\title{Variance-derivative cancellation in the discounted moment closure}
+\author{Research note accompanying the numerical comparison}
+\date{14 November 2026}
+\begin{document}
+\maketitle
+\noindent\textbf{Status.} This note proves an algebraic identity for smooth
+fields. It does not prove local existence of the nonlinear calibration system.
+The numerical comparison is documented in \texttt{benchmarks/RESULTS.md}.
+
+\section{Definitions}
+Let $z=(x,u,v)$, where $x=\log(S/S_0)$, and write
+\[
+ s(t,x)=\sigma(t,S_0e^x),\quad a=s^2>0,\quad
+ g=\partial_x s=\frac{a_x}{2\sqrt a},\quad
+ \beta=\rho_{Sd}\nu_d,\quad\gamma=\rho_{Sf}\nu_f,
+ \quad c=\rho_{df}\nu_d\nu_f.
+\]
+The physical rates are $r_d=f_d^0+\eta_d+u$ and
+$r_f=f_f^0+\eta_f+v$, with
+$\eta_i=\nu_i^2 B_{\kappa_i}(t)^2/2$ and
+$B_k(t)=(1-e^{-kt})/k$ (continuously extended at $k=0$).
+In particular $r_d,r_f$ have no explicit $x$ dependence.
+Set
+\[
+ b=(r_d-r_f-a/2,-\kappa_d u,-\kappa_f v-\gamma s),\qquad
+ Q=\begin{pmatrix}a&\beta s&\gamma s\\
+ \beta s&\nu_d^2&c\\\gamma s&c&\nu_f^2\end{pmatrix},
+ \qquad h=(s,\beta,\gamma)^\top.
+\]
+The killed forward operator is
+\[
+ \mathcal K_s^*m=-\nabla\cdot(bm)
+       +\frac12\sum_{i,j}\partial_{ij}(Q_{ij}m)-r_dm.
+\]
+The five-field system evolves the discounted physical density $p$ and signed
+moments $(m_1,m_2,m_3,m_4)$ of
+$(\ell_d,\zeta_f,\ell_f,\zeta_d)$. Its two $\ell$ equations are
+\begin{align}
+ \partial_t m_1&=\mathcal K_s^*m_1-(\kappa_d+sg)m_1-m_2
+ +(V_d+\beta s)p-\nabla\cdot(ghm_1),\\
+ \partial_t m_3&=\mathcal K_s^*m_3-\kappa_fm_3+m_4
+ +(-V_f+\gamma s)p-\nabla\cdot(ghm_3),
+\end{align}
+where $V_i(t)=\nu_i^2 B_{2\kappa_i}(t)$.
+
+\section{Exact cancellation}
+Define the non-divergence operators
+\begin{align*}
+ \mathcal D_a={}&\frac a2\partial_{xx}
+ +\frac{\nu_d^2}2\partial_{uu}+\frac{\nu_f^2}2\partial_{vv}
+ +\beta s\partial_{xu}+\gamma s\partial_{xv}+c\partial_{uv},\\
+ \mathcal A_a={}&\mathcal D_a+
+ \left(-r_d+r_f+\frac a2+\frac{a_x}2\right)\partial_x
+ +\kappa_d u\partial_u+(\kappa_f v+\gamma s)\partial_v.
+\end{align*}
+\begin{proposition}
+For positive $s$ twice continuously differentiable in $x$ and sufficiently
+smooth moment fields, the two equations above are exactly equivalent to
+\begin{align}
+ \partial_t m_1&=\mathcal A_a m_1+(\kappa_f-r_d)m_1-m_2
+                         +(V_d+\beta s)p,\label{eq:active1}\\
+ \partial_t m_3&=\mathcal A_a m_3+
+       \left(\kappa_d-r_d+\frac{a_x}2\right)m_3+m_4
+                         +(-V_f+\gamma s)p.\label{eq:active3}
+\end{align}
+Neither equation contains $a_{xx}$.
+\end{proposition}
+\begin{proof}
+Because $sg=a_x/2$, the pure log-spot terms satisfy
+\[
+ \tfrac12\partial_{xx}(am)-\partial_x(sgm)
+       =\tfrac12a m_{xx}+\tfrac12a_xm_x.
+\]
+The mixed terms satisfy
+\[
+ \beta\partial_{xu}(sm)-\beta\partial_u(gm)=\beta s m_{xu},
+ \qquad
+ \gamma\partial_{xv}(sm)-\gamma\partial_v(gm)=\gamma s m_{xv}.
+\]
+Expanding the drift divergences therefore gives
+\[
+ \mathcal K_s^*m-\nabla\cdot(ghm)
+ =\mathcal A_am+
+ (\kappa_d+\kappa_f-r_d+a_x/2)m.
+\]
+Subtracting $(\kappa_d+sg)m_1$ in the domestic equation or $\kappa_fm_3$
+in the foreign equation proves the claim, including the asymmetric remaining
+$a_x/2$ term in \eqref{eq:active3}.
+\end{proof}
+
+\section{What it says about nonlinear calibration}
+For $\bar m_i=\int_{\mathbb R^2}m_i\,du\,dv$ and
+$n=\bar m_1-\bar m_3$, consider the known-market-denominator feedback
+\[
+ a=q-\frac{2n}{p_*},\qquad
+ p_*(t,x)=S_0e^x C_{KK}(t,S_0e^x),
+\]
+where $q$ is the target Dupire variance. Equivalence with the model-denominator
+feedback still requires the regularity and identification argument in the
+separate discounted-closure note; it is not assumed for arbitrary fields.
+
+For any of the passive fields $R=p,m_2,m_4$, expansion of
+$\mathcal K_s^*R$ contains the term $R a_{xx}/2$. The other reaction terms
+in those equations involve at most $a_x$. Consequently their highest feedback
+derivative is
+\[
+ -\frac{R}{p_*}\partial_{xx}\int_{\mathbb R^2}(m_1-m_3)\,du\,dv.
+\]
+Derivatives of $1/p_*$ multiply only $n$ or $n_x$. By contrast,
+\eqref{eq:active1}--\eqref{eq:active3} contain at most the first derivative of
+this marginal feedback. Ordering the active fields $(m_1,m_3)$ first, and
+$(p,m_2,m_4)$ second, thus gives a triangular structure to the highest
+\emph{feedback} derivatives. Every row still contains the ordinary physical
+second-order diffusion $\mathcal D_a$.
+
+This identity removes a particular derivative coupling. It does not by itself
+establish sectoriality, coercivity or an invertible linearised operator in a
+function space adequate for the whole-space calibration problem.
+
+\section{Remaining steps for an existence theorem}
+A meaningful perturbative result would fix an admissible Gaussian reference
+with $a_0\geq\underline a>0$ and prove that a nonzero neighbourhood of market
+smile perturbations admits calibrated solutions, with stability in a stated
+norm. The following issues remain unresolved in the present work:
+\begin{enumerate}
+\item A Gaussian marginal $p_*$ tends to zero in the wings. Positivity at every
+finite strike does not bound $1/p_*$ on the whole line. A weighted space must
+control the marginal projection, division, products and derivatives together.
+\item The passive equations retain second derivatives of active marginals.
+A full linearised estimate, including unbounded Gaussian-rate drifts, killing
+and nonlocal couplings, is needed. Formal triangularity is insufficient.
+\item The original initial law is a point mass. Starting a perturbation at
+positive time after a Gaussian evolution avoids this initial singularity,
+but would be a narrower theorem and must be labelled accordingly.
+\item The nonlinear estimate must preserve the variance margin and identify
+the resulting fields with a positive discounted density and physical moments.
+\end{enumerate}
+No claim of nonflat local existence, stability, or removal of regularisation
+is made until these estimates are supplied. The flat Gaussian benchmark,
+the exact linear closure, the cancellation, and the finite numerical
+calibrations are distinct results.
+\end{document}

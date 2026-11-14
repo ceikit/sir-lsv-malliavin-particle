@@ -1,6 +1,7 @@
 numpy>=2.0
 scipy
-sympy      # only for checks/check_moment_closure.py
+sympy      # only for the two symbolic checks
+matplotlib # only for benchmarks/compare.py report
 pandas
 # only for data/pull_eurusd_options_databento.py:
 # databento

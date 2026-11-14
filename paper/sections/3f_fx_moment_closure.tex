@@ -1,0 +1,354 @@
+\subsection{Exact closure of discounted first moments}\label{subsec: momentClosure}
+This section gives a deterministic formulation of the four-process
+representation. The closure is exact for a prescribed, possibly nonconstant,
+local volatility. A converse below identifies sufficiently regular solutions
+of the nonlinear closed equations with calibrated stochastic models. It does
+not assert existence of such nonlinear solutions.
+
+\subsubsection{Coordinates and operators}
+Use the domestic risk-neutral measure and set
+\[
+Z_t=(X_t,U_t,V_t)=(\log S_t,x_t^d,x_t^f),\qquad
+s(t,x)=\sigma(t,e^x),\qquad g(t,x)=\partial_xs(t,x).
+\]
+Here $X$ denotes log spot, not the three-vector used in the manuscript's
+variational construction. Write $\nu_i=\sigma_r^i$, $r_d=\eta_d(t)+u$,
+$r_f=\eta_f(t)+v$, where the curve-fitting shifts are
+\[
+\eta_i(t)=r_i^0(t)+\tfrac12\nu_i^2 B_{\kappa_i}(t)^2,
+\qquad B_k(t)=\int_0^t e^{-ka}da.
+\]
+In particular $B_0(t)=t$. Put
+\[
+\beta=\rho_{Sd}\nu_d,\quad \gamma=\rho_{Sf}\nu_f,\quad
+c=\rho_{df}\nu_d\nu_f,\quad k=\kappa_d+\kappa_f,\quad
+v_i(t)=\nu_i^2 B_{2\kappa_i}(t).
+\]
+The drift, covariance matrix and covariance with the spot Brownian motion are
+\begin{equation}\label{eq: closureState}
+b=\begin{pmatrix}r_d-r_f-\tfrac12s^2\\-\kappa_du\\-\kappa_fv-\gamma s\end{pmatrix},
+\quad Q=\begin{pmatrix}s^2&\beta s&\gamma s\\\beta s&\nu_d^2&c\\\gamma s&c&\nu_f^2\end{pmatrix},
+\quad h=\begin{pmatrix}s\\\beta\\\gamma\end{pmatrix}.
+\end{equation}
+Thus $d\langle Z,W^S\rangle_t=h(t,Z_t)dt$. Define the backward killed operator
+and its distributional adjoint by
+\begin{align}
+\mathcal K_s\varphi&=b\cdot\nabla\varphi+
+\tfrac12\sum_{a,b=1}^3Q_{ab}\partial_{ab}\varphi-r_d\varphi,
+\label{eq: closureOperator}\\
+\mathcal K_s^*w&=-\nabla\cdot(bw)+
+\tfrac12\sum_{a,b=1}^3\partial_{ab}(Q_{ab}w)-r_dw.\nonumber
+\end{align}
+The off-diagonal second derivatives each occur twice inside the sum.
+
+Order the auxiliary variables as $Y=(\ell^d,\zeta^f,\ell^f,\zeta^d)^\top$.
+Their equations take the affine form
+\begin{equation}\label{eq: closureAffine}
+dY=(AY+f)dt+GY\,dW^S,
+\end{equation}
+where
+\[
+A=\begin{pmatrix}
+-\kappa_d-sg&-1&0&0\\
+-\gamma g&-k&0&0\\
+0&0&-\kappa_f&1\\
+0&0&\beta g&-k
+\end{pmatrix},\qquad
+f=\begin{pmatrix}v_d+\beta s\\c\\-v_f+\gamma s\\c\end{pmatrix},
+\qquad G=\operatorname{diag}(g,0,g,0).
+\]
+The initial conditions are $Z_0=z_0=(\log S_0,0,0)$ and $Y_0=0$.
+
+\subsubsection{The closed forward equations}
+For $D_t=\exp(-\int_0^t r_d(a,Z_a)da)$ define a positive measure $p_t$
+and four signed measures $m_{i,t}$ on $\mathbb R^3$ by
+\begin{equation}\label{eq: closureMeasures}
+\langle\varphi,p_t\rangle=\mathbb E^d[D_t\varphi(Z_t)],\qquad
+\langle\varphi,m_{i,t}\rangle=\mathbb E^d[D_tY_{i,t}\varphi(Z_t)].
+\end{equation}
+These are discounted measures, not probability densities; $m_i$ need not be
+positive. The same letters denote densities when they exist.
+
+\begin{thm}[Exact discounted first-moment closure]\label{thm: momentClosure}
+Suppose the state and affine auxiliary equations have nonexplosive solutions.
+Assume $\mathbb E[D_t(1+|Y_t|)]<\infty$ and, for every compactly supported
+smooth test function, integrability of the drift terms and the true-martingale
+property of the local martingales in It\^o's formulas for
+$D\varphi(Z)$ and $DY_i\varphi(Z)$. Then, in the distributional sense,
+\begin{align}
+\partial_t p&=\mathcal K_s^*p,\label{eq: closureFive}\\
+\partial_t m_1&=\mathcal K_s^*m_1-(\kappa_d+sg)m_1-m_2
+ +(v_d+\beta s)p-\nabla\cdot(ghm_1),\nonumber\\
+\partial_t m_2&=\mathcal K_s^*m_2-km_2-\gamma gm_1+cp,\nonumber\\
+\partial_t m_3&=\mathcal K_s^*m_3-\kappa_fm_3+m_4
+ +(-v_f+\gamma s)p-\nabla\cdot(ghm_3),\nonumber\\
+\partial_t m_4&=\mathcal K_s^*m_4-km_4+\beta gm_3+cp,\nonumber
+\end{align}
+with $p_0=\delta_{z_0}$ and $m_{i,0}=0$.
+No second or higher moments of $Y$ occur. This assertion does not require
+invertibility of the driver correlation matrix or existence of densities.
+\end{thm}
+\begin{proof}
+The finite-variation differential $dD=-r_dDdt$ contributes the killing term.
+The product rule for $DY_i\varphi(Z)$ gives the drift
+\[
+D\left\{Y_i\mathcal K_s\varphi+(AY+f)_i\varphi
+            +(GY)_i h\cdot\nabla\varphi\right\}dt.
+\]
+The last summand is the quadratic covariation of $Y_i$ and $\varphi(Z)$.
+Taking expectations gives
+\[
+\frac{d}{dt}\langle\varphi,m_i\rangle
+=\langle\mathcal K_s\varphi,m_i\rangle+
+\sum_j\langle A_{ij}\varphi,m_j\rangle+\langle f_i\varphi,p\rangle
++\mathbf1_{i\in\{1,3\}}\langle gh\cdot\nabla\varphi,m_i\rangle.
+\]
+Distributional integration by parts proves the assertion. Equivalently, the
+joint generator preserves functions affine in $Y$. Their second derivatives
+with respect to $Y$ vanish, so the quadratic auxiliary diffusion cannot produce
+second auxiliary moments. All mixed state--auxiliary derivatives are retained
+in the divergence term.
+\end{proof}
+
+\paragraph{Explicit shared-noise term.}
+For either $m=m_1$ or $m=m_3$,
+\[
+-\nabla\cdot(ghm)=-\partial_x(sgm)-\beta\partial_u(gm)
+                                      -\gamma\partial_v(gm).
+\]
+Omitting this term is incorrect even when the physical state diffusion is
+otherwise implemented exactly. For fixed $s$ the five equations are linear:
+one density equation and two pairs of coupled moment equations.
+
+\subsubsection{Uniqueness for a prescribed nonflat coefficient}
+The preceding theorem uses only integrability assumptions. The following
+stronger, concrete assumptions give a convenient uniqueness class; they are
+not claimed to be minimal.
+
+\begin{prop}[Fixed-coefficient uniqueness]\label{prop: closureIdentification}
+Fix a finite horizon. Assume the two rate volatilities are strictly positive,
+the constant correlation matrix is positive definite, $\kappa_i\geq0$, and
+the deterministic shifts are $C^1$.
+Suppose $s$ is $C^{1,4}$, is bounded above and away from zero, and its spatial
+derivatives through order four are bounded on the horizon. Then the stochastic
+measures in (\ref{eq: closureMeasures}) are the unique weakly continuous
+measure solution of (\ref{eq: closureFive}) with its specified initial data in
+the class
+\begin{equation}\label{eq: closureWeightClass}
+\sup_{0\leq t\leq T}\int e^{\lambda|z|}
+       \left(|p_t|+\sum_{i=1}^4|m_{i,t}|\right)(dz)<\infty
+\quad\hbox{for every }\lambda>0.
+\end{equation}
+Here absolute values denote total variation. In particular the fixed-coefficient
+system does not introduce additional solutions in this class. The volatility
+may have genuine spot dependence.
+\end{prop}
+\begin{proof}
+The state coefficients have linear growth and bounded spatial derivatives of
+positive order needed below. The state SDE has a unique strong solution. The
+rate states are Gaussian convolutions plus bounded drift convolutions; log
+spot is an integral of these states plus a bounded-volatility martingale and
+a bounded drift correction. Hence $Z$ has all exponential moments of $|Z|$,
+uniformly on the finite horizon. The matrices $A,G$ and the source $f$ are
+bounded. Standard It\^o moment estimates for their linear SDE give all finite
+polynomial moments of $Y$. The domestic discount factor and its inverse have
+all finite moments because the domestic integrated rate is Gaussian.
+H\"older's inequality proves (\ref{eq: closureWeightClass}) for the stochastic
+measures and the integrability required in Theorem \ref{thm: momentClosure}.
+
+For uniqueness take arbitrary smooth compactly supported terminal functions
+$\psi_0,\ldots,\psi_4$ at time $t$. Starting from $(Z_a,Y_a)=(z,y)$, define
+\[
+F(a,z,y)=\mathbb E_{a,z,y}\left[
+ e^{-\int_a^t r_d(b,Z_b)db}
+ \left(\psi_0(Z_t)+\sum_iY_{i,t}\psi_i(Z_t)\right)\right].
+\]
+The affine auxiliary equation implies
+$F(a,z,y)=F_0(a,z)+\sum_i y_i F_i(a,z)$.
+Differentiation of the stochastic flow up to order two is legitimate under the
+bounded derivative assumptions; linear auxiliary moment estimates also apply
+to these variations. It gives spatial derivatives of $F_j$ up to order two
+with at most exponential growth in $|z|$. The Markov property and It\^o's
+formula give the backward equations
+\begin{align*}
+\partial_a F_0+\mathcal K_s F_0+\sum_i f_iF_i&=0,\\
+\partial_a F_j+\mathcal K_s F_j+\sum_i A_{ij}F_i
+       +\mathbf1_{j\in\{1,3\}}gh\cdot\nabla F_j&=0.
+\end{align*}
+Here $f$ is the source in (\ref{eq: closureAffine}); the terminal conditions
+are $F_j(t,\cdot)=\psi_j$.
+Time regularity follows from these equations (or from the uniformly elliptic
+backward equation). Pair these functions with the difference of two forward
+solutions. Their time derivative is zero by duality. To use these noncompact
+test functions, multiply by smooth cutoffs tending to one. All cutoff errors
+vanish by (\ref{eq: closureWeightClass}), the exponential derivative bounds,
+and the at-most-linear state drift and killing term. The initial difference
+is zero, so the terminal pairing is zero for every choice of $\psi_j$.
+This proves uniqueness of all five measures.
+\end{proof}
+
+\subsubsection{Compatibility identities and the spot marginal}
+The next identities additionally use the fact that $Y$ consists of the
+integrated Malliavin sensitivities, rather than arbitrary affine auxiliaries.
+Impose the own-forward-measure duality and integrability assumptions of that
+representation; the bounded smooth setting of Proposition
+\ref{prop: closureIdentification} is a sufficient setting. Define
+$c_d=r_d-r_d^0(t)$ and $c_f=r_f-r_f^0(t)$.
+
+\begin{prop}[Full-state and marginal compatibility]\label{prop: closureCompatibility}
+For the stochastic measures, the following are distributional identities:
+\begin{align}
+c_dp&=-\partial_xm_1-v_d\partial_up-\partial_vm_2,
+\label{eq: closureConstraints}\\
+c_fp&=-\partial_xm_3-m_3-\partial_um_4-v_f\partial_vp.\nonumber
+\end{align}
+Let bars denote integration over $(u,v)$, put $n_i=\overline{m_i}$,
+$n=n_1-n_3$, and $J_i=\overline{c_i p}$. Then
+\begin{equation}\label{eq: closureMarginalConstraints}
+J_d=-\partial_xn_1,\qquad J_f=-\partial_xn_3-n_3.
+\end{equation}
+Consequently the discounted log-spot marginal obeys
+\begin{equation}\label{eq: closureMarginal}
+\partial_t\bar p=\mathcal B_t\bar p+
+ \tfrac12(\partial_{xx}+\partial_x)(s^2\bar p+2n),
+\qquad
+\mathcal B_t w=-(r_d^0-r_f^0)\partial_xw-r_d^0 w.
+\end{equation}
+\end{prop}
+\begin{proof}
+For a smooth test $\varphi$ of all three coordinates, domestic own-forward
+duality gives
+\[
+\mathbb E^d[D c_d\varphi(Z)]
+=\mathbb E^d[D(\ell^d\partial_x\varphi+
+                         v_d\partial_u\varphi+\zeta^f\partial_v\varphi)].
+\]
+Foreign own-forward duality gives the analogous identity with tangent vector
+$(\ell^f,\zeta^d,v_f)$ and, on changing to the domestic measure, a factor
+$S=e^x$ on both sides. Thus
+\[
+e^xc_fp=-\partial_x(e^xm_3)-\partial_u(e^xm_4)
+                         -v_f\partial_v(e^xp).
+\]
+This proves (\ref{eq: closureConstraints}), including the essential $-m_3$
+term. Rate integration, justified by cutoffs and the moment bounds, proves
+(\ref{eq: closureMarginalConstraints}). Direct integration of the density
+equation gives
+\[
+\partial_t\bar p=
+-\partial_x\left[(r_d^0-r_f^0-\tfrac12s^2)\bar p+J_d-J_f\right]
++\tfrac12\partial_{xx}(s^2\bar p)-r_d^0\bar p-J_d.
+\]
+Substitution of the two marginal constraints yields
+(\ref{eq: closureMarginal}).
+\end{proof}
+
+If the respective upper-boundary fluxes vanish, the same identities imply
+\begin{equation}\label{eq: closureTailRecovery}
+n_1(x)=\int_x^\infty J_d(y)dy,\qquad
+n_3(x)=e^{-x}\int_x^\infty e^yJ_f(y)dy.
+\end{equation}
+Thus the correction can also be recovered from the physical discounted
+density alone, using the conventional tail integrals. The moment fields give
+an alternative evolution of those quantities; they do not add independent
+terminal-law information. The five-field formulation is not a claim that
+three-dimensional density-based calibration was previously unavailable.
+
+\subsubsection{Nonlinear calibration and a known-denominator formulation}
+Let $q(t,x)=\sigma_{Dup}(t,e^x)^2$ be the prescribed market Dupire variance.
+With $\bar p>0$, the exact nonlinear feedback is
+\begin{equation}\label{eq: closureFeedback}
+s^2(t,x)=q(t,x)-2\frac{n(t,x)}{\bar p(t,x)},\qquad
+n(t,x)=\int_{\mathbb R^2}(m_1-m_3)(t,x,u,v)du\,dv.
+\end{equation}
+There is no log-coordinate Jacobian in this ratio: it cancels between the
+two marginals. Both are discounted under the domestic measure.
+Equations (\ref{eq: closureFive}) and (\ref{eq: closureFeedback}), with
+$g=\partial_xs$, are a closed nonlinear system of five fields on three spatial
+coordinates. They are not five equations on log spot alone.
+
+Let $p_*(t,x)$ denote the market discounted log-spot density. For a sufficiently
+regular market call surface $C$,
+\begin{equation}\label{eq: closureMarketDensity}
+p_*(t,x)=e^x\partial_{KK}C(t,e^x),\quad
+\partial_t p_* =\mathcal B_t p_*+
+              \tfrac12(\partial_{xx}+\partial_x)(q p_*),\quad
+p_*(0)=\delta_{\log S_0}.
+\end{equation}
+Assume it is positive for $t>0$ and that the stated one-dimensional forward
+equations have uniqueness in the integrability class under consideration.
+For smooth bounded uniformly positive coefficients and deterministic bounded
+rates, this is the usual diffusion-law uniqueness class; exponential moments
+also justify recovering call prices from the densities.
+
+\begin{thm}[Calibration equivalence]
+\label{thm: closureNonlinear}
+Suppose the five fields solve (\ref{eq: closureFive}) in the class
+(\ref{eq: closureWeightClass}), with densities for positive times and the
+specified initial measure data. Suppose the induced deterministic coefficient $s$
+satisfies Proposition \ref{prop: closureIdentification}, and the market data
+satisfy (\ref{eq: closureMarketDensity}) and the uniqueness assumptions above.
+Either of the feedback relations
+\begin{align}
+s^2&=q-2n/\bar p,\label{eq: closureTwoFeedbacks}\\
+\text{or}\qquad s^2&=q-2n/p_*\label{eq: closureKnownDenominator}
+\end{align}
+for $t>0$ implies $\bar p=p_*$ and exact calibration of the associated
+three-factor model. In this regularity class the two formulations are
+equivalent, and their solutions are precisely the stochastic moment fields
+of calibrated coefficients. This is an equivalence conditional on a solution,
+not an existence or uniqueness assertion for the nonlinear system.
+\end{thm}
+\begin{proof}
+Once the candidate $s$ is fixed, Proposition \ref{prop: closureIdentification}
+identifies all five fields with the stochastic measures of the corresponding
+strong state and auxiliary solution. Proposition \ref{prop: closureCompatibility}
+therefore applies; it is not an additional freely imposed constraint.
+With the first feedback, (\ref{eq: closureMarginal}) becomes exactly
+(\ref{eq: closureMarketDensity}), so uniqueness gives $\bar p=p_*$.
+
+For the second feedback use $2n=(q-s^2)p_*$. Subtract the market equation from
+(\ref{eq: closureMarginal}) and put $w=\bar p-p_*$. Then
+\begin{equation}\label{eq: closureDifference}
+\partial_t w=\mathcal B_t w+
+       \tfrac12(\partial_{xx}+\partial_x)(s^2w),\qquad w(0)=0.
+\end{equation}
+Uniqueness for this linear equation gives $w=0$. Hence the first feedback holds
+as well. Finally
+\[
+C_m(t,K)=\int_{\mathbb R}(e^x-K)^+\bar p(t,x)dx=C(t,K).
+\]
+Conversely, a calibrated coefficient satisfying these assumptions has
+$\bar p=p_*$ and satisfies the first feedback by the Malliavin calibration
+identity. Its stochastic moments solve (\ref{eq: closureFive}), so they also
+satisfy the second feedback.
+\end{proof}
+
+The known-denominator version removes division by an \emph{unknown} marginal
+from this deterministic formulation. It does not remove small market densities
+in the wings. Nor does replacing the marginal by a market density automatically
+give an unbiased or consistent finite-particle estimator.
+
+\paragraph{Analytical significance and remaining obstruction.}
+The full discounted joint law of $(Z,Y)$ would require seven state coordinates.
+For the calibration functional it can be replaced exactly by five fields on
+the three physical coordinates. Discounting appears as killing, so an extra
+discount-factor coordinate is unnecessary. For a prescribed coefficient,
+Proposition \ref{prop: closureIdentification} gives a deterministic and
+stochastic identification theorem with nonflat volatility.
+For calibration, the known-denominator version is a useful formulation for
+a fixed-point or perturbation argument. But it still contains a square root,
+an unbounded rate domain, a time-zero Dirac law, and derivatives of the unknown
+coefficient. In fact its divergence terms generally differentiate
+$g=\partial_xs$ again. Positivity of the variance gap, control of small
+densities and nonlinear estimates remain necessary. No contraction or
+nonlinear parabolicity conclusion follows from the linear closure alone.
+
+\paragraph{Checks and numerical scope.}
+The companion script \texttt{checks/check\_moment\_closure.py} checks the
+affine generator identity symbolically, checks both marginal PDE reductions,
+and tests weak balances in a prescribed nonflat Monte Carlo model. These are
+checks of the representation, not a three-dimensional PDE solver or a smile
+recovery experiment. A solver should preserve discounted mass, monitor the
+full-state compatibility residuals (\ref{eq: closureConstraints}), verify
+the shared-noise fluxes, and compare recovered call prices independently.
