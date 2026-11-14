@@ -21,6 +21,7 @@ where $\ell^d$ and $\ell^f$ are two of four auxiliary processes carried by each 
 | `checks/check_forward_measure.py` | Test of the simulation scheme under the domestic T-forward measure and of the particle weights. |
 | `checks/check_matrix_form.py` | Shows that the matrix form and the scalar form of the auxiliary processes agree path by path. |
 | `checks/compare_estimators.py` | Noise of the conventional estimator against the new one, strike by strike, at fixed local volatility. |
+| `test3/` | Calibration to the CME EUR/USD surface of 12 November 2026 and repricing. Scripts (they also need `scipy`) and the report, `RESULTS.md`. |
 | `data/pull_eurusd_options_databento.py` | Pulls one day of CME EUR/USD option settlements from Databento (needs your own API key). |
 | `archive/first_note/` | The first four-page note and its scripts. Superseded by the paper. |
 | `archive/paper_build/` | The fragments and the script used to assemble the paper from the 2016 draft. They need the original draft and a results log, which are not in this repository. |
@@ -54,12 +55,16 @@ Checked so far:
 - With a skewed local volatility (2 million paths), both identities hold within one standard error; dropping the measure-change terms puts the foreign term about 2.7% off.
 - At fixed local volatility and 20,000 particles, the standard deviation of the new estimator of the rates correction was 14 to 66 times lower than that of the conventional estimator without control variates, across strikes from the 1% to the 99% quantile.
 
+- Full particle calibration to CME EUR/USD option settlements of 12 November 2026 (expiries December 2026 to December 2027), with independent repricing. With the correction, the stochastic rates add at most 0.005 vol points of repricing error, against 0.19 (base rate parameters) and 0.47 (stressed) without it. Report: `test3/RESULTS.md`.
+
+The paper's text predates the calibration test and still says it has not been run.
+
 Not done:
 
-- A full calibration against a market smile followed by vanilla repricing. The estimator comparison above is not a calibration benchmark.
-- A comparison with control-variate particle methods.
+- Market data beyond December 2027 (the surface is extended synthetically to 5 years), and rate parameters calibrated to caps or swaptions.
+- A comparison with control-variate particle methods. The estimator comparison above is not a calibration benchmark.
 - Existence and uniqueness of the calibrated model are not addressed, and the local variance can become negative for some surfaces and rate parameters (see "Scope and caveats" in the paper).
-- No claim of novelty is made; the literature has not been checked systematically.
+- No claim of novelty is made. A targeted search (November 2026) did not find this representation, but the two papers that come closest have not been read in full: Benhamou, Gruz and Rivoira (2008), who use Malliavin calculus for the correction with one stochastic rate, and Bloch and Nakashima (2008), who write the FX local volatility with two stochastic rates as the deterministic-rates one plus a bias.
 
 ## Data
 
