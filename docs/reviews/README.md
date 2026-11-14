@@ -15,3 +15,15 @@ Two notes written on 14 November 2026 by a second agent (Codex), which audited t
 | The data are options on futures, the paper's calibration input is options on spot | Open. The calibration test treats them as options on the forward to their expiry; see `calibration/RESULTS.md` |
 
 The existence section of the paper (`paper/sections/3e_fx_existence.tex`) comes from the second note.
+
+## Moment-closure note
+
+`2026-11-14_moment_closure_summary.md` is the second agent's write-up of `paper/discounted_moment_closure_note.pdf`; `2026-11-14_moment_closure_validation.json` is the output of `checks/check_moment_closure.py` with its default settings.
+
+Review of the note (14 November 2026):
+
+- The auxiliary matrices of the note are those of `sirlsv/sensitivities.py`.
+- Theorem 1 (closure), Proposition 3 (compatibility identities and the marginal equation) and both reductions of Theorem 4 were re-derived by hand. No error found.
+- The script reproduces the z-scores quoted in the write-up. Its Monte Carlo part uses affine test functions only, so the second-order terms of the generator are covered by the symbolic part, not by the simulation.
+- Proposition 2 (uniqueness at fixed coefficient) is a sketch of a standard duality argument. It was read, not checked in detail.
+- Theorem 4 is conditional: it assumes a regular solution of the nonlinear system exists.

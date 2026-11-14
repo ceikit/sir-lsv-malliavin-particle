@@ -16,7 +16,7 @@ where $\ell^d$ and $\ell^f$ are two of four auxiliary processes carried by each 
 
 | Path | What it is |
 |---|---|
-| `paper/` | The paper. `SIR_LSV_particle_FX.tex` is the main file; the text is in `sections/`, the bibliography in `references.tex`. |
+| `paper/` | The paper. `SIR_LSV_particle_FX.tex` is the main file; the text is in `sections/`, the bibliography in `references.tex`. `discounted_moment_closure_note.pdf` is a separate five-page note (see Status); its LaTeX source is not in the repository yet. |
 | `sirlsv/` | Shared Python code: the recursion for the four auxiliary processes, Hull-White formulas, the stable Gaussian step covariance, and the prescribed-volatility model used by the checks. |
 | `checks/` | Scripts that test the building blocks with a prescribed local volatility (nothing is calibrated). |
 | `calibration/` | Particle calibration to the CME EUR/USD surface of 12 November 2026 and repricing. Report: `calibration/RESULTS.md`. |
@@ -34,10 +34,11 @@ The checks:
 | `compare_estimators.py` | Noise of the conventional estimator against the new one, strike by strike, at fixed local volatility. |
 | `check_covariance_stability.py` | Deterministic regression test of the Gaussian step covariance (54 cases, including zero mean reversion and tiny steps). |
 | `check_gaussian_existence.py` | The flat-smile construction of the existence section, against independent integration. |
+| `check_moment_closure.py` | The first-moment closure of the note: symbolic check of the generator identity and of the two feedback reductions (needs `sympy`), then Monte Carlo check of the weak balances. |
 
 ## Running
 
-Python 3 with the packages in `requirements.txt` (`numpy` 2 or later, `scipy`, `pandas`). Run everything from the repository root.
+Python 3 with the packages in `requirements.txt` (`numpy` 2 or later, `scipy`, `pandas`, and `sympy` for one check). Run everything from the repository root.
 
 ```
 make checks-quick      # all checks at a reduced size, about a minute
@@ -64,6 +65,7 @@ Checked:
 - With a skewed local volatility (2 million paths), both identities hold within one standard error; dropping the measure-change terms puts the foreign term about 2.7% off.
 - At fixed local volatility and 20,000 particles, the standard deviation of the new estimator of the rates correction was 14 to 66 times lower than that of the conventional estimator without control variates, across strikes from the 1% to the 99% quantile. This is not a calibration benchmark.
 - Full particle calibration to CME EUR/USD option settlements of 12 November 2026 (expiries December 2026 to December 2027), with independent repricing and illustrative rate parameters. With the correction, the stochastic rates add at most 0.005 vol points of repricing error over the market expiries, against 0.19 (base rate parameters) and 0.47 (stressed) without it. In the stressed case the calibrated variance hits its floor near the money from about 3 years, on the synthetic part of the surface. Report: `calibration/RESULTS.md`.
+- A deterministic formulation (`paper/discounted_moment_closure_note.pdf`, by the second agent): for a prescribed local volatility, the discounted density and the discounted first moments of the four auxiliary processes solve five linear forward equations in the three state variables, with no higher moments. The note also shows that dividing the correction by the market density instead of the model density gives an equivalent calibration condition for regular solutions. The generator identity is verified symbolically; in the note's Monte Carlo test (120,000 paths) the weak balances and compatibility identities hold within 1.6 standard errors. This is a reformulation and a tool for analysis: no PDE solver is implemented and no existence result follows from it.
 
 Not done:
 
@@ -76,7 +78,7 @@ Known issues:
 
 - The calibration data are options on EUR/USD futures. They are treated as options on the forward to their expiry; futures-forward convexity and the delivery-date mismatch are ignored.
 - `data/pull_eurusd_options_databento.py` does not process `update_action`, so a settlement that was published and then deleted would still be used. The script has not been tested against the live API.
-- The existence section and the hypotheses added to the propositions come from the second agent's audit (`docs/reviews/`). Its numerical checks pass and the flat-smile and log-contract arguments have been re-derived; the regularized well-posedness proof has been read but not checked line by line.
+- The existence section and the hypotheses added to the propositions come from the second agent's audit (`docs/reviews/`). Its numerical checks pass and the flat-smile and log-contract arguments have been re-derived; the regularized well-posedness proof has been read but not checked line by line. The same holds for the moment-closure note: its equations have been re-derived by hand and match `sirlsv/sensitivities.py`, while the fixed-coefficient uniqueness proof is a sketch of a standard duality argument that has been read, not checked in detail.
 
 ## Data
 

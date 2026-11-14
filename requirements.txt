@@ -1,5 +1,6 @@
 numpy>=2.0
 scipy
+sympy      # only for checks/check_moment_closure.py
 pandas
 # only for data/pull_eurusd_options_databento.py:
 # databento

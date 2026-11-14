@@ -1,0 +1,75 @@
+{
+  "symbolic": {
+    "joint_generator_identity": true,
+    "no_second_moments": true,
+    "marginal_equation": true,
+    "model_denominator_reduction": true,
+    "market_denominator_difference_equation": true
+  },
+  "monte_carlo": {
+    "paths": 120000,
+    "steps": 600,
+    "horizon": 3.0,
+    "seed": 271828,
+    "volatility": "0.18*(1-0.6*tanh(2*log(S)))",
+    "weak_balances": [
+      {
+        "field": "p",
+        "weak_residual": -0.0009251302685257436,
+        "standard_error": 0.0009469354183268604,
+        "z_score": -0.9769729282703942
+      },
+      {
+        "field": "m1",
+        "weak_residual": -1.3522119602551974e-05,
+        "standard_error": 1.0513642121898323e-05,
+        "z_score": -1.2861498846710264
+      },
+      {
+        "field": "m2",
+        "weak_residual": -2.9349514853537417e-07,
+        "standard_error": 5.756399975426517e-07,
+        "z_score": -0.509858852387386
+      },
+      {
+        "field": "m3",
+        "weak_residual": 5.575466705628299e-06,
+        "standard_error": 6.496900897530073e-06,
+        "z_score": 0.8581732726980527
+      },
+      {
+        "field": "m4",
+        "weak_residual": -1.1122905760037134e-06,
+        "standard_error": 7.011083087270264e-07,
+        "z_score": -1.5864746746807976
+      }
+    ],
+    "omitted_flux_comparison": [
+      {
+        "field": "m1",
+        "omitted_flux_z_score": -60.39774093884776,
+        "mean_shared_noise_integral": -0.0006219359022106311
+      },
+      {
+        "field": "m3",
+        "omitted_flux_z_score": 51.4607300382152,
+        "mean_shared_noise_integral": 0.00032924362276067615
+      }
+    ],
+    "full_state_compatibility": [
+      {
+        "identity": "domestic",
+        "mean_error": 4.7860734432491845e-05,
+        "standard_error": 0.0001162733697305473,
+        "z_score": 0.41162249398469003
+      },
+      {
+        "identity": "foreign",
+        "mean_error": -5.108287849282603e-05,
+        "standard_error": 6.304097771444674e-05,
+        "z_score": -0.8103122817068819
+      }
+    ],
+    "scope": "Prescribed nonflat Euler simulation; includes time discretization error."
+  }
+}

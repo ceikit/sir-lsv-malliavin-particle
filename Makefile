@@ -12,6 +12,7 @@ paper:
 checks-quick:
 	$(PYTHON) checks/check_covariance_stability.py
 	$(PYTHON) checks/check_gaussian_existence.py
+	$(PYTHON) checks/check_moment_closure.py --symbolic-only
 	$(PYTHON) checks/check_sensitivities.py 100000 50 5.0
 	$(PYTHON) checks/check_forward_measure.py 50 50000
 	$(PYTHON) checks/check_matrix_form.py 50
@@ -21,6 +22,7 @@ checks-quick:
 checks:
 	$(PYTHON) checks/check_covariance_stability.py
 	$(PYTHON) checks/check_gaussian_existence.py
+	$(PYTHON) checks/check_moment_closure.py
 	$(PYTHON) checks/check_sensitivities.py 1000000 200 5.0
 	$(PYTHON) checks/check_forward_measure.py 200 500000
 	$(PYTHON) checks/check_matrix_form.py 100
