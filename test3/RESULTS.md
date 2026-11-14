@@ -1,0 +1,70 @@
+# Test 3: calibration to the CME EUR/USD surface and repricing
+
+Trade date 12 November 2026. Data: CME EUR/USD monthly and quarterly options (root EUU) and 6E futures, official settlements pulled from Databento. The data itself is licensed and is not in this repository.
+
+## What was run
+
+1. **Surface.** Implied volatilities from settlements (Black-76 on the underlying future), out-of-the-money options with premium of at least 3 ticks. The discount factor for each expiry comes from put-call parity: it holds within 1.8 ticks at every expiry, and the implied forward matches the futures settlement to the fifth decimal. One SVI smile per expiry; fit error 0.01 to 0.13 vol points.
+2. **Data cleaning.** The three 2028 expiries were dropped: they have almost no open interest, and their settled smiles are calendar-inconsistent with the 2027 smiles across 27% to 48% of the strike range within three standard deviations. A smaller violation between the September and October 2027 smiles, between 2.7 and 3 standard deviations, is repaired by taking a running maximum of total variance. The market range is therefore December 2026 to December 2027. Beyond that, the surface is extended at constant implied-vol smile to 5 years. **The extension is synthetic, not market data.**
+3. **Calibration.** Particle method of the paper, with the integrated Malliavin sensitivities, under the domestic (USD) risk-neutral measure. 200,000 particles, 100 time steps per year plus every option expiry, quartic kernel.
+4. **Repricing.** Independent Monte Carlo with the calibrated local volatility frozen: 200,000 paths, a different seed, control variates on E[D] and E[D S]. Error = (model price − market price) / vega, at 10-delta and 25-delta calls and puts and at the money.
+
+The rate parameters are illustrative, not calibrated to caps or swaptions (none were used):
+
+| Case | κ_d | σ_d | κ_f | σ_f | ρ_Sd | ρ_Sf | ρ_df |
+|---|---|---|---|---|---|---|---|
+| base | 3% | 1.0% | 3% | 0.8% | −0.30 | +0.12 | +0.63 |
+| stress | 3% | 1.5% | 3% | 1.2% | +0.30 | −0.30 | +0.40 |
+
+The base correlations are the historical 2012-2014 estimates quoted by Cozma, Mariapragassam and Reisinger (2019).
+
+## Results
+
+Repricing error in vol points, mean of absolute values over the five strikes per expiry, Monte Carlo standard error 0.02 to 0.06:
+
+| | deterministic rates | base, no correction | base, with correction | stress, no correction | stress, with correction |
+|---|---|---|---|---|---|
+| market expiries, mean | 0.023 | 0.099 | 0.024 | 0.239 | 0.023 |
+| market expiries, max | 0.134 | 0.184 | 0.135 | 0.489 | 0.134 |
+| 5y (synthetic), max | 0.102 | 0.613 | 0.133 | 2.892 | 0.537 |
+
+The deterministic-rates column is the error floor of the pipeline itself (time discretisation, Dupire from fitted smiles). The largest single error, −0.13 at the 10-delta put of the 3-week expiry, is time discretisation: it falls to −0.06 with 400 steps per year.
+
+Same random numbers are used in every repricing run, so the error due to the stochastic rates is isolated by differencing against the deterministic-rates run:
+
+| | market expiries, mean | market expiries, max | 1.5y to 3.5y, max | 5y, max |
+|---|---|---|---|---|
+| base, with correction | 0.001 | 0.005 | 0.017 | 0.030 |
+| base, no correction | 0.098 | 0.186 | 0.504 | 0.638 |
+| stress, with correction | 0.002 | 0.005 | 0.027 | 0.435 |
+| stress, no correction | 0.233 | 0.471 | 1.842 | 2.830 |
+
+The calibrated correction at the money tracks the flat-volatility closed form of the paper's check (b) within about 10% to 25% through 4 years in the base case.
+
+## Findings
+
+- **The correction works over the market range.** With it, the stochastic rates add at most 0.005 vol points of error up to December 2027, against 0.19 (base) and 0.47 (stress) without it.
+- **The positivity caveat is real.** In the stress case, the rates generate more forward variance than the surface contains, and the calibrated local variance hits the floor within one standard deviation of the money from t ≈ 3.0 years. No local volatility model with those rate parameters reproduces the (synthetic) long end, and the 5-year at-the-money error is 0.54 vol points.
+- **Feedback instability seen, but traced to a bug.** A first version became unstable after about 2.6 years: a few particles developed very large sensitivities, which fed back through the estimated local-vol slope. The cause was my surface code (smiles tabulated on a clipped strike grid, giving noisy second derivatives). With the smiles evaluated analytically the instability disappeared without any smoothing. An optional minimum-effective-particle guard is kept in the script; it was not needed afterwards.
+
+## Not done
+
+- Rate parameters calibrated to cap or swaption volatilities.
+- Futures-forward convexity and the delivery-date mismatch: options are treated as options on the forward to their expiry.
+- Comparison with the conventional estimator and with a control-variate particle method (Test 4).
+- A real long-dated surface beyond December 2027.
+
+## Scripts
+
+Run in order, in the folder that holds `eurusd_cme_options_2026-11-12.csv`:
+
+```
+python build_surface.py eurusd_cme_options_2026-11-12.csv   # implied vols, parity, SVI fits, arbitrage checks
+python calibrate.py det none none 100000 100 1                 # deterministic rates
+python calibrate.py base base malliavin 100000 100 1           # base rates, with correction
+python calibrate.py base_nocorr base none 100000 100 1         # base rates, no correction
+python calibrate.py stress stress malliavin 100000 100 1
+python calibrate.py stress_nocorr stress none 100000 100 1
+```
+
+`build_surface.py` writes `parity.csv` and `svi_fits.csv`, which `calibrate.py` reads. They are derived from licensed data and are not committed. `fit_essvi.py` is a joint arbitrage-free fit that was tried and rejected: it misfit the 2027 risk reversals by up to 1.6 vol points.
